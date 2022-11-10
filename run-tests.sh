@@ -5,6 +5,10 @@ TRACE=/tmp/run-tests-trace.txt
 DOCKER_ODOO=om-hospital-test-odoo
 DOCKER_PG=om-hospital-test-pg
 
+#default values for configuration file
+DOCKER_ODOO_IMAGE_NAME=odoo:15
+DOCKER_PG_IMAGE_NAME=postgres:10
+
 trap ctrl_c INT
 function remove_temp_files {
 	# Clean up temporary files
@@ -34,6 +38,19 @@ function please_install {
 	exit 1
 }
 
+function usage_message {
+	echo "Usage: ./run-tests.sh [--configure | --help] [odoo_module_name]"
+}
+
+function help_message {
+	echo "Use --configure to set the odoo version and postgres version to use for running the test suite."
+	echo ""
+	echo "Specify the odoo module folder to run the test suite:"
+	echo
+	echo "$ ./run-tests.sh my_module"
+	echo
+}
+
 # Remove any old files
 remove_temp_files
 
@@ -57,24 +74,42 @@ if [ $not_found -ne 0 ]; then
 fi
 
 if [ $# -ne 1 ]; then
-	echo "Usage:"
-	echo "$ ./run-tests.sh [module name]"
+	usage_message
+	exit 1
+elif [ "$1" = "--configure" ]; then
+	echo "Starting configuration flow." >>$TRACE
+	echo "TO DO: Implement configuration flow"
+	exit 1
+elif [ "$1" = "--help" ]; then
+	echo "Showing help message." >>$TRACE
+	usage_message
+	echo
+	help_message
 	exit 1
 fi
 MODULE=$1
 
+if [ -f .run-odoo-tests/config ]; then
+	echo "Found configuration file, and sourcing it." >>$TRACE
+	source .run-odoo-tests/config
+else
+	echo "Configuration missing, continuing with defaults" >>$TRACE
+fi
+echo "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME" >>$TRACE
+echo "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME" >>$TRACE
+
 echo "Checking if the postgres docker exists." >>$TRACE
 found_docker_pg=$(docker ps -a | grep $DOCKER_PG | wc -l)
 if [ $found_docker_pg -eq 0 ]; then
-	echo "Creating a postgres:10 server." >>$TRACE
-	docker create -p 5433:5432 -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --name $DOCKER_PG postgres:10 >>$TRACE
+	echo "Creating a postgres server." >>$TRACE
+	docker create -p 5433:5432 -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --name $DOCKER_PG $DOCKER_PG_IMAGE_NAME >>$TRACE
 fi
 
 echo "Checking if the odoo docker exists." >>$TRACE
 found_docker_odoo=$(docker ps -a | grep $DOCKER_ODOO | wc -l)
 if [ $found_docker_odoo -eq 0 ]; then
 	echo "Creating the odoo server to run the tests." >>$TRACE
-	docker create -v ~/prj:/mnt/extra-addons -p 8071:8069 --name $DOCKER_ODOO --link $DOCKER_PG:db odoo:15 -d odoo -u om_hospital -i om_hospital --stop-after-init --test-tags /om_hospital >>$TRACE
+	docker create -v ~/prj:/mnt/extra-addons -p 8071:8069 --name $DOCKER_ODOO --link $DOCKER_PG:db $DOCKER_ODOO_IMAGE_NAME -d odoo -u om_hospital -i om_hospital --stop-after-init --test-tags /om_hospital >>$TRACE
 fi
 
 # Make sure database is started.
@@ -82,7 +117,7 @@ echo "Starting the postgres server." >>$TRACE
 docker start $DOCKER_PG >>$TRACE
 
 while true; do
-	hash=$(find $MODULE -type f -exec ls -l {} + | sort | md5sum)
+	hash=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
 	echo "Calculated hash for the folder where we are running AT START OF CYCLE: $hash" >>$TRACE
 
 	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
@@ -118,9 +153,9 @@ while true; do
 		echo "$(tput smso)Traces of the first failures:$(tput rmso)"
 		cat /tmp/run-tests-logs.txt | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
 
-#		echo "Showing tail of odoo logs on screen." >>$TRACE
-#		echo "$(tput smso)Logs of the odoo server:$(tput rmso)"
-#		tail -n $lines $LOG | cut -c -$(tput cols)
+		#		echo "Showing tail of odoo logs on screen." >>$TRACE
+		#		echo "$(tput smso)Logs of the odoo server:$(tput rmso)"
+		#		tail -n $lines $LOG | cut -c -$(tput cols)
 	else
 		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 2)"
 		clear
@@ -136,10 +171,10 @@ while true; do
 		tail -n $lines $LOG | cut -c -$(tput cols)
 	fi
 
-	hash2=$(find $MODULE -type f -exec ls -l {} + | sort | md5sum)
+	hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
 	echo "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2" >>$TRACE
 	if [ "$hash" = "$hash2" ]; then
 		echo "Waiting for changes on the filesystem." >>$TRACE
-		inotifywait -r -q $MODULE 2>&1 >>$TRACE
+		inotifywait -r -q "$MODULE" 2>&1 >>$TRACE
 	fi
 done
