@@ -7,5 +7,5 @@ TO DO:
 
 DONE:
 
-* Add parameter/configuration mechanism to allow specifying what module(s) to test.
-* Clean up list of failed tests.
+* ~~Add parameter/configuration mechanism to allow specifying what module(s) to test.~~
+* ~~Clean up list of failed tests.~~
