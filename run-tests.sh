@@ -109,7 +109,7 @@ echo "Checking if the odoo docker exists." >>$TRACE
 found_docker_odoo=$(docker ps -a | grep $DOCKER_ODOO | wc -l)
 if [ $found_docker_odoo -eq 0 ]; then
 	echo "Creating the odoo server to run the tests." >>$TRACE
-	docker create -v ~/prj:/mnt/extra-addons -p 8071:8069 --name $DOCKER_ODOO --link $DOCKER_PG:db $DOCKER_ODOO_IMAGE_NAME -d odoo -u om_hospital -i om_hospital --stop-after-init --test-tags /om_hospital >>$TRACE
+	docker create -v ~/prj:/mnt/extra-addons --name $DOCKER_ODOO --link $DOCKER_PG:db $DOCKER_ODOO_IMAGE_NAME -d odoo -u om_hospital -i om_hospital --stop-after-init --test-tags /om_hospital >>$TRACE
 fi
 
 # Make sure database is started.
