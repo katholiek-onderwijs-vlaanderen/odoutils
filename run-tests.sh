@@ -1,13 +1,24 @@
 #!/bin/bash
-ERRORS=/tmp/run-tests-errors.txt
-LOG=/tmp/run-tests-logs.txt
-TRACE=/tmp/run-tests-trace.txt
-DOCKER_ODOO=om-hospital-test-odoo
-DOCKER_PG=om-hospital-test-pg
 
-#default values for configuration file
+# Default values for variables
+# Can be overridden via .run-odoo-tests/config
+
+# Temp file where the detected FAILs are stored.
+ERRORS=/tmp/run-tests-errors.txt
+# Temp file where the output of the docker running the test suite is stored.
+LOG=/tmp/run-tests-logs.txt
+# Temp file where debug tracing is written. Tail it to debug the script.
+TRACE=/tmp/run-tests-trace.txt
+# Name of the docker container with odoo that runs the test suite.
+DOCKER_ODOO=om-hospital-test-odoo
+# Name of the docker container that runs the postgres that is backing the odoo instance running the test suite.
+DOCKER_PG=om-hospital-test-pg
+# Name of the docker image that is used to run the test suite.
 DOCKER_ODOO_IMAGE_NAME=odoo:15
+# Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
 DOCKER_PG_IMAGE_NAME=postgres:10
+# Name of the user-defined bridge network that connects the odoo container with the database container.
+DOCKER_NETWORK_NAME=run-odoo-tests-network
 
 function remove_temp_files {
 	# Clean up temporary files
@@ -110,19 +121,26 @@ MODULE=$1
 
 echo "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME" >>$TRACE
 echo "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME" >>$TRACE
+echo "Current DOCKER_NETWORK_NAME=$DOCKER_NETWORK_NAME" >>$TRACE
+
+echo "Checking if the user-defined bridge network exists." >>$TRACE
+if [ $(docker network ls | grep "$DOCKER_NETWORK_NAME" | wc -l) -eq 0 ]; then
+	echo "Creating the user-defined bridge network." >>$TRACE
+	docker network create "$DOCKER_NETWORK_NAME" >>$TRACE
+fi
 
 echo "Checking if the postgres docker exists." >>$TRACE
 found_docker_pg=$(docker ps -a | grep $DOCKER_PG | wc -l)
 if [ $found_docker_pg -eq 0 ]; then
 	echo "Creating a postgres server." >>$TRACE
-	docker create -p 5433:5432 -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --name $DOCKER_PG $DOCKER_PG_IMAGE_NAME >>$TRACE
+	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_NAME" --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE
 fi
 
 echo "Checking if the odoo docker exists." >>$TRACE
 found_docker_odoo=$(docker ps -a | grep $DOCKER_ODOO | wc -l)
 if [ $found_docker_odoo -eq 0 ]; then
 	echo "Creating the odoo server to run the tests." >>$TRACE
-	docker create -v ~/prj:/mnt/extra-addons --name $DOCKER_ODOO --link $DOCKER_PG:db $DOCKER_ODOO_IMAGE_NAME -d odoo -u om_hospital -i om_hospital --stop-after-init --test-tags /om_hospital >>$TRACE
+	docker create -v ~/prj:/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE
 fi
 
 # Remove any old files
