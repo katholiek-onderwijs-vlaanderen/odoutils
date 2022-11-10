@@ -133,16 +133,14 @@ echo "Checking if the postgres docker exists." >>$TRACE
 found_docker_pg=$(docker ps -a | grep $DOCKER_PG | wc -l)
 if [ $found_docker_pg -eq 0 ]; then
 	echo "Creating a postgres server." >>$TRACE
-	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
-#	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_NAME" --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
+	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_NAME" --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
 fi
 
 echo "Checking if the odoo docker exists." >>$TRACE
 found_docker_odoo=$(docker ps -a | grep $DOCKER_ODOO | wc -l)
 if [ $found_docker_odoo -eq 0 ]; then
 	echo "Creating the odoo server to run the tests." >>$TRACE
-	docker create -v ~/prj:/mnt/extra-addons -p 8071:8069 --name $DOCKER_ODOO --link $DOCKER_PG:db $DOCKER_ODOO_IMAGE_NAME -d odoo -u om_hospital -i om_hospital --stop-after-init --test-tags /om_hospital >>$TRACE 2>&1
-	#docker create -v ~/prj:/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
+	docker create -v ~/prj:/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK_NAME" -e HOST=$DOCKER_PG "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
 fi
 
 # Remove any old files
