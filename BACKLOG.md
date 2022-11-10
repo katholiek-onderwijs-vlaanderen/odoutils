@@ -15,12 +15,12 @@ SHOULD
 COULD
 * Determine default postgres version automatically.
 * extract logging into a function
-* add -log option to tail /tmp/run-tests-logs.txt
 
 WOULD
 
 DONE:
 
+* ~~add --tail option to tail /tmp/run-tests-logs.txt~~
 * ~~Add detection of ERROR messages, other than FAIL -> 3rd state for the screen (neutral) (add import in __init__.py that does not exist -> ERROR - but right now "SUCCESS")~~
 * ~~Do not expose HTTP port for odoo.~~
 * ~~Log output starting at the position of the first FAILED test.~~
