@@ -8,12 +8,12 @@ MUST
 SHOULD
 * Add parameter+configuration mechanism to allow specifying the version of postgres to use. (must delete + create dockers if necessary)
 * Add parameter+configuration mechanism to allow specifying the version of odoo to use. (must delete + create dockers if necessary)
-* Determine default postgres version automatically.
 
 * add -trace option that does not color/clear/fancy output. This should make testing the script easier.
 * Make the script testable. (fake docker logs/create/etc..  + -trace option should allow for rappid prototyping.)
 
 COULD
+* Determine default postgres version automatically.
 * extract logging into a function
 * add -log option to tail /tmp/run-tests-logs.txt
 

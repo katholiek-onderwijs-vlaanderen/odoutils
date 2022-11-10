@@ -9,7 +9,6 @@ DOCKER_PG=om-hospital-test-pg
 DOCKER_ODOO_IMAGE_NAME=odoo:15
 DOCKER_PG_IMAGE_NAME=postgres:10
 
-trap ctrl_c INT
 function remove_temp_files {
 	# Clean up temporary files
 	rm $ERRORS 2 &>1 >>$TRACE
@@ -39,20 +38,23 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: ./run-tests.sh [--configure | --help] [odoo_module_name]"
+	echo "Usage: ./run-tests.sh [--configure | --help | --tail] [odoo_module_name]"
 }
 
 function help_message {
-	echo "Use --configure to set the odoo version and postgres version to use for running the test suite."
-	echo ""
 	echo "Specify the odoo module folder to run the test suite:"
 	echo
 	echo "$ ./run-tests.sh my_module"
 	echo
+	echo "Options:"
+	echo
+	echo "    --configure    Prompts for configuration of the odoo version and postgres version to use for running the test suite."
+	echo
+	echo "    --tail         Tails the output of the test run."
+	echo "                   You should start <run-test.sh module_name> first, and issue run-test.sh --tail to view logs."
+	echo
+	echo "    --help         Displays this help message."
 }
-
-# Remove any old files
-remove_temp_files
 
 # Check if all dependencies are installed..
 command -v figlet >>$TRACE || please_install figlet figlet
@@ -62,7 +64,7 @@ command -v inotifywait >>$TRACE || please_install inotifywait inotify-tools
 
 # If we are running on WSL, check that the docker command
 # is telling us to start the docker engine via the UI...
-docker 2 &>1 >/tmp/docker.log
+docker 2&>1 >/tmp/docker.log
 not_found=$(cat /tmp/docker.log | grep "could not be found" | wc -l)
 if [ $not_found -ne 0 ]; then
 	cat /tmp/docker.log
@@ -73,6 +75,15 @@ if [ $not_found -ne 0 ]; then
 	exit 1
 fi
 
+# Load configuration file first (before processing of command line arguments)
+if [ -f .run-odoo-tests/config ]; then
+	echo "Found configuration file, and sourcing it." >>$TRACE
+	source .run-odoo-tests/config
+else
+	echo "Configuration missing, continuing with defaults." >>$TRACE
+fi
+
+# Process the command line arguments.
 if [ $# -ne 1 ]; then
 	usage_message
 	exit 1
@@ -85,16 +96,18 @@ elif [ "$1" = "--help" ]; then
 	usage_message
 	echo
 	help_message
+	echo
 	exit 1
+elif [ "$1" = "--tail" ]; then
+	if [ -s $LOG ]; then
+		tail -f $LOG
+	else
+		echo "Please start ./run-tests.sh [module_name] first in a different console, then issue this command to tail the logs."
+	fi
+	exit 0
 fi
 MODULE=$1
 
-if [ -f .run-odoo-tests/config ]; then
-	echo "Found configuration file, and sourcing it." >>$TRACE
-	source .run-odoo-tests/config
-else
-	echo "Configuration missing, continuing with defaults" >>$TRACE
-fi
 echo "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME" >>$TRACE
 echo "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME" >>$TRACE
 
@@ -111,6 +124,12 @@ if [ $found_docker_odoo -eq 0 ]; then
 	echo "Creating the odoo server to run the tests." >>$TRACE
 	docker create -v ~/prj:/mnt/extra-addons --name $DOCKER_ODOO --link $DOCKER_PG:db $DOCKER_ODOO_IMAGE_NAME -d odoo -u om_hospital -i om_hospital --stop-after-init --test-tags /om_hospital >>$TRACE
 fi
+
+# Remove any old files
+remove_temp_files
+
+# Set handling of CTRL-C to allow the user to stop the loop.
+trap ctrl_c INT
 
 # Make sure database is started.
 echo "Starting the postgres server." >>$TRACE
