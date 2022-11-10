@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default values for variables
-# Can be overridden via .run-odoo-tests/config
+# Can be overridden via .run-odoo-tests/config, or using command line parameters (TO DO: add support).
 
 # Temp file where the detected FAILs are stored.
 ERRORS=/tmp/run-tests-errors.txt
@@ -10,9 +10,9 @@ LOG=/tmp/run-tests-logs.txt
 # Temp file where debug tracing is written. Tail it to debug the script.
 TRACE=/tmp/run-tests-trace.txt
 # Name of the docker container with odoo that runs the test suite.
-DOCKER_ODOO=om-hospital-test-odoo
+DOCKER_ODOO=run-odoo-tests-odoo
 # Name of the docker container that runs the postgres that is backing the odoo instance running the test suite.
-DOCKER_PG=om-hospital-test-pg
+DOCKER_PG=run-odoo-tests-pg
 # Name of the docker image that is used to run the test suite.
 DOCKER_ODOO_IMAGE_NAME=odoo:15
 # Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
@@ -22,10 +22,10 @@ DOCKER_NETWORK_NAME=run-odoo-tests-network
 
 function remove_temp_files {
 	# Clean up temporary files
-	rm $ERRORS 2 &>1 >>$TRACE
-	rm $LOG 2 &>1 >>$TRACE
+	rm $ERRORS >>$TRACE 2>&1
+	rm $LOG >>$TRACE 2>&1
 	if [ -f $TRACE ]; then
-		rm $TRACE 2 &>1 >/dev/null
+		rm $TRACE >/dev/null 2>&1
 	fi
 }
 
@@ -33,9 +33,9 @@ function ctrl_c() {
 	echo $(tput sgr 0)
 	clear
 	echo "Stopping odoo server" >>$TRACE
-	docker stop $DOCKER_ODOO >>$TRACE
+	docker stop $DOCKER_ODOO >>$TRACE 2>&1
 	echo "Stopping postgres server" >>$TRACE
-	docker stop $DOCKER_PG >>$TRACE
+	docker stop $DOCKER_PG >>$TRACE 2>&1
 	exit 0
 }
 
@@ -75,7 +75,7 @@ command -v inotifywait >>$TRACE || please_install inotifywait inotify-tools
 
 # If we are running on WSL, check that the docker command
 # is telling us to start the docker engine via the UI...
-docker 2&>1 >/tmp/docker.log
+docker >/tmp/docker.log 2>&1
 not_found=$(cat /tmp/docker.log | grep "could not be found" | wc -l)
 if [ $not_found -ne 0 ]; then
 	cat /tmp/docker.log
@@ -126,21 +126,23 @@ echo "Current DOCKER_NETWORK_NAME=$DOCKER_NETWORK_NAME" >>$TRACE
 echo "Checking if the user-defined bridge network exists." >>$TRACE
 if [ $(docker network ls | grep "$DOCKER_NETWORK_NAME" | wc -l) -eq 0 ]; then
 	echo "Creating the user-defined bridge network." >>$TRACE
-	docker network create "$DOCKER_NETWORK_NAME" >>$TRACE
+	docker network create "$DOCKER_NETWORK_NAME" >>$TRACE 2>&1
 fi
 
 echo "Checking if the postgres docker exists." >>$TRACE
 found_docker_pg=$(docker ps -a | grep $DOCKER_PG | wc -l)
 if [ $found_docker_pg -eq 0 ]; then
 	echo "Creating a postgres server." >>$TRACE
-	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_NAME" --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE
+	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
+#	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_NAME" --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
 fi
 
 echo "Checking if the odoo docker exists." >>$TRACE
 found_docker_odoo=$(docker ps -a | grep $DOCKER_ODOO | wc -l)
 if [ $found_docker_odoo -eq 0 ]; then
 	echo "Creating the odoo server to run the tests." >>$TRACE
-	docker create -v ~/prj:/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE
+	docker create -v ~/prj:/mnt/extra-addons -p 8071:8069 --name $DOCKER_ODOO --link $DOCKER_PG:db $DOCKER_ODOO_IMAGE_NAME -d odoo -u om_hospital -i om_hospital --stop-after-init --test-tags /om_hospital >>$TRACE 2>&1
+	#docker create -v ~/prj:/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
 fi
 
 # Remove any old files
@@ -151,7 +153,7 @@ trap ctrl_c INT
 
 # Make sure database is started.
 echo "Starting the postgres server." >>$TRACE
-docker start $DOCKER_PG >>$TRACE
+docker start $DOCKER_PG >>$TRACE 2>&1
 
 while true; do
 	hash=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
@@ -161,7 +163,7 @@ while true; do
 	echo "Timestamp when we are running: $timestamp" >>$TRACE
 
 	echo "(Re)starting the odoo server to run the test suite." >>$TRACE
-	docker restart $DOCKER_ODOO >>$TRACE
+	docker restart $DOCKER_ODOO >>$TRACE 2>&1
 	docker logs -f --since $timestamp $DOCKER_ODOO 2>$LOG
 	echo "Finished running the tests..." >>$TRACE
 
@@ -173,7 +175,7 @@ while true; do
 		clear
 
 		echo "Displaying FAILED message." >>$TRACE
-		figlet -c -t "FAILED!"
+		figlet -c -t "FAILED!" 2>>$TRACE
 		echo
 
 		echo "Displaying list of failed tests." >>$TRACE
@@ -194,7 +196,7 @@ while true; do
 		echo "Errors other than FAIL detected.." >>$TRACE
 		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 4)"
 		clear
-		figlet -c -t "Unknown"
+		figlet -c -t "Unknown" 2>>$TRACE
 		echo
 
 		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
@@ -208,7 +210,7 @@ while true; do
 		clear
 
 		echo "Displaying SUCCESS message." >>$TRACE
-		figlet -c -t "Success"
+		figlet -c -t "Success" 2>>$TRACE
 		echo
 
 		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
@@ -223,6 +225,6 @@ while true; do
 	echo "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2" >>$TRACE
 	if [ "$hash" = "$hash2" ]; then
 		echo "Waiting for changes on the filesystem." >>$TRACE
-		inotifywait -r -q "$MODULE" 2>&1 >>$TRACE
+		inotifywait -r -q "$MODULE" >>$TRACE 2>&1
 	fi
 done

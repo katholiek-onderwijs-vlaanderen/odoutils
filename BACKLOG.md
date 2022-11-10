@@ -13,7 +13,6 @@ SHOULD
 * add -trace option that does not color/clear/fancy output. This should make testing the script easier.
 * Make the script testable. (fake docker logs/create/etc..  + -trace option should allow for rappid prototyping.)
 * combine remove script into the main script as --delete.
-* remove the use of --link for connection the database to the odoo docker (deprecated). Should use user-defined bridge network. (https://docs.docker.com/network/bridge/)
 
 COULD
 * Determine default postgres version automatically.
@@ -23,6 +22,7 @@ WOULD
 
 DONE:
 
+* ~~remove the use of --link for connection the database to the odoo docker (deprecated). Should use user-defined bridge network. (https://docs.docker.com/network/bridge/)~~
 * ~~add --tail option to tail /tmp/run-tests-logs.txt~~
 * ~~Add detection of ERROR messages, other than FAIL -> 3rd state for the screen (neutral) (add import in __init__.py that does not exist -> ERROR - but right now "SUCCESS")~~
 * ~~Do not expose HTTP port for odoo.~~
