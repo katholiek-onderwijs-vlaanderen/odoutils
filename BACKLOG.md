@@ -11,6 +11,7 @@ SHOULD
 
 * add -trace option that does not color/clear/fancy output. This should make testing the script easier.
 * Make the script testable. (fake docker logs/create/etc..  + -trace option should allow for rappid prototyping.)
+* combine remove script into the main script as --delete.
 
 COULD
 * Determine default postgres version automatically.
