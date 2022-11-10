@@ -114,9 +114,13 @@ while true; do
 		lines=$(expr $(tput lines) - 11 - $error_count)
 		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
 
-		echo "Showing tail of odoo logs on screen." >>$TRACE
-		echo "$(tput smso)Logs of the odoo server:$(tput rmso)"
-		tail -n $lines $LOG | cut -c -$(tput cols)
+		echo "Logging stack traces of failures from logs." >>$TRACE
+		echo "$(tput smso)Traces of the first failures:$(tput rmso)"
+		cat /tmp/run-tests-logs.txt | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
+
+#		echo "Showing tail of odoo logs on screen." >>$TRACE
+#		echo "$(tput smso)Logs of the odoo server:$(tput rmso)"
+#		tail -n $lines $LOG | cut -c -$(tput cols)
 	else
 		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 2)"
 		clear
