@@ -129,13 +129,14 @@ while true; do
 	echo "Finished running the tests..." >>$TRACE
 
 	echo "Server finised running the odoo test suite." >>$TRACE
-	cat $LOG | grep "ERROR.*test.*FAIL:" >$ERRORS
+	cat $LOG | grep ".* ERROR odoo .*test.*FAIL:" >$ERRORS
+
 	if [ -s $ERRORS ]; then
 		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 1)"
 		clear
 
 		echo "Displaying FAILED message." >>$TRACE
-		figlet -c -t "*** FAILED! ***"
+		figlet -c -t "FAILED!"
 		echo
 
 		echo "Displaying list of failed tests." >>$TRACE
@@ -152,22 +153,32 @@ while true; do
 		echo "Logging stack traces of failures from logs." >>$TRACE
 		echo "$(tput smso)Traces of the first failures:$(tput rmso)"
 		cat /tmp/run-tests-logs.txt | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
+	elif [ $(cat $LOG | grep '.* ERROR odoo .*' | wc -l) -ne 0 ]; then
+		echo "Errors other than FAIL detected.." >>$TRACE
+		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 4)"
+		clear
+		figlet -c -t "Unknown"
+		echo
 
-		#		echo "Showing tail of odoo logs on screen." >>$TRACE
-		#		echo "$(tput smso)Logs of the odoo server:$(tput rmso)"
-		#		tail -n $lines $LOG | cut -c -$(tput cols)
+		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
+		lines=$(expr $(tput lines) - 9)
+
+		echo "Showing tail of odoo log on screen." >>$TRACE
+		echo "$(tput smso)Tail of logs:$(tput rmso)"
+		tail -n $lines $LOG | cut -c -$(tput cols)
 	else
 		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 2)"
 		clear
 
 		echo "Displaying SUCCESS message." >>$TRACE
-		figlet -c -t "*** SUCCESS ***"
+		figlet -c -t "Success"
 		echo
 
 		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
-		lines=$(expr $(tput lines) - 8)
+		lines=$(expr $(tput lines) - 9)
 
 		echo "Showing tail of odoo log on screen." >>$TRACE
+		echo "$(tput smso)Tail of logs:$(tput rmso)"
 		tail -n $lines $LOG | cut -c -$(tput cols)
 	fi
 
