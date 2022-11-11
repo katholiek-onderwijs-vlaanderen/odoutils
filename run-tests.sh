@@ -23,7 +23,12 @@ DOCKER_ODOO_IMAGE_NAME=odoo:15
 DOCKER_PG_IMAGE_NAME=postgres:10
 
 # Run in loop, or run once. 0: loop / 1: once
-RUN_ONCE=0
+ONCE=0
+PLAIN=0
+
+# Did the last run of the test suite fail? 0: All tests passed, 1: At least one test failed, 2: Some other (unknown error) occured.
+# -1 if test suite was not yet run.
+LAST_RUN_FAILED=-1
 
 function remove_temp_files {
 	# Clean up temporary files
@@ -78,7 +83,7 @@ function help_message {
 	echo "                   The exit code is 0, also when nothing needed to be / was deleted."
 	echo
 	echo "    --help         Displays this help message."
-	echo 
+	echo
 	echo "Exit codes: (mostly useful in combination with --once)"
 	echo
 	echo "    0  All tests were run, and none of them failed."
@@ -104,15 +109,24 @@ function run_tests {
 	cat $LOG | grep ".* ERROR odoo .*test.*FAIL:" >$ERRORS
 
 	if [ -s $ERRORS ]; then
-		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 1)"
-		clear
+		LAST_RUN_FAILED=1
+
+		if [ "$PLAIN" -eq 0 ]; then
+			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 1)"
+			clear
+		fi
 
 		echo "Displaying FAILED message." >>$TRACE
 		figlet -c -t "FAILED!" 2>>$TRACE
 		echo
 
 		echo "Displaying list of failed tests." >>$TRACE
-		echo "$(tput smso)These tests failed:$(tput rmso)"
+
+		if [ "$PLAIN" -eq 0 ]; then
+			echo "$(tput smso)These tests failed:$(tput rmso)"
+		else
+			echo "These tests failed:"
+		fi
 		cat $ERRORS | sed 's/.*FAIL: //g' | cut -c -$(tput cols)
 		echo
 
@@ -123,12 +137,22 @@ function run_tests {
 		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
 
 		echo "Logging stack traces of failures from logs." >>$TRACE
-		echo "$(tput smso)Traces of the first failures:$(tput rmso)"
+		if [ "$PLAIN" -eq 0 ]; then
+			echo "$(tput smso)Traces of the first failures:$(tput rmso)"
+		else
+			echo "Traces of the first failures:"
+		fi
 		cat /tmp/run-tests-logs.txt | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
 	elif [ $(cat $LOG | grep '.* ERROR odoo .*' | wc -l) -ne 0 ]; then
+		LAST_RUN_FAILED=2
+
 		echo "Errors other than FAIL detected.." >>$TRACE
-		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 4)"
-		clear
+
+		if [ "$PLAIN" -eq 0 ]; then
+			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 4)"
+			clear
+		fi
+
 		figlet -c -t "Unknown" 2>>$TRACE
 		echo
 
@@ -136,11 +160,20 @@ function run_tests {
 		lines=$(expr $(tput lines) - 9)
 
 		echo "Showing tail of odoo log on screen." >>$TRACE
-		echo "$(tput smso)Tail of logs:$(tput rmso)"
+
+		if ["$PLAIN" -eq 0]; then
+			echo "$(tput smso)Tail of logs:$(tput rmso)"
+		else
+			echo "Tail of logs:"
+		fi
+
 		tail -n $lines $LOG | cut -c -$(tput cols)
 	else
-		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 2)"
-		clear
+		LAST_RUN_FAILED=0
+		if [ "$PLAIN" -eq 0 ]; then
+			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 2)"
+			clear
+		fi
 
 		echo "Displaying SUCCESS message." >>$TRACE
 		figlet -c -t "Success" 2>>$TRACE
@@ -150,7 +183,11 @@ function run_tests {
 		lines=$(expr $(tput lines) - 9)
 
 		echo "Showing tail of odoo log on screen." >>$TRACE
-		echo "$(tput smso)Tail of logs:$(tput rmso)"
+		if [ "$PLAIN" -eq 0 ]; then
+			echo "$(tput smso)Tail of logs:$(tput rmso)"
+		else
+			echo "Tail of logs:"
+		fi
 		tail -n $lines $LOG | cut -c -$(tput cols)
 	fi
 }
@@ -185,39 +222,67 @@ else
 fi
 
 # Process the command line arguments.
-if [ $# -ne 1 ]; then
-	usage_message
-	exit 1
-elif [ "$1" = "--configure" ]; then
-	echo "Starting configuration flow." >>$TRACE
-	echo "TO DO: Implement configuration flow"
-	exit 1
-elif [ "$1" = "--help" ]; then
-	echo "Showing help message." >>$TRACE
-	usage_message
-	echo
-	help_message
-	echo
-	exit 1
-elif [ "$1" = "--tail" ]; then
-	if [ -s $LOG ]; then
-		tail -f $LOG
+if [ $# -eq 1 ]; then
+	if [ "$1" = "--configure" ]; then
+		echo "Starting configuration flow." >>$TRACE
+		echo "TO DO: Implement configuration flow"
+		exit 1
+	elif [ "$1" = "--help" ]; then
+		echo "Showing help message." >>$TRACE
+		usage_message
+		echo
+		help_message
+		echo
+		exit 1
+	elif [ "$1" = "--tail" ]; then
+		if [ -s $LOG ]; then
+			tail -f $LOG
+		else
+			echo "Please start ./run-tests.sh [module_name] first in a different console, then issue this command to tail the logs."
+		fi
+		exit 0
+	elif [ "$1" = "--remove" ]; then
+		echo "Removing postgres and odoo containers used for running tests."
+		echo "They will be created automatically again when you run ./run-tests.sh."
+		delete_containers
+		echo "Done."
+		exit 0
 	else
-		echo "Please start ./run-tests.sh [module_name] first in a different console, then issue this command to tail the logs."
+		MODULE=$1
 	fi
-	exit 0
-elif [ "$1" = "--remove" ]; then
-	echo "Removing postgres and odoo containers used for running tests."
-	echo "They will be created automatically again when you run ./run-tests.sh."
-	delete_containers
-	echo "Done."
-	exit 0
+elif [ $# -eq 2 ]; then
+	if [ "$1" = "--once" ]; then
+		ONCE=1
+		MODULE=$2
+	elif [ "$1" == "--plain"]; then
+		PLAIN=1
+		MODULE=$2
+	else
+		usage_message
+		exit 1
+	fi
+elif [ $# -eq 3 ]; then
+	if [ "$1" = "--once" ] && [ "$2" = "--plain" ]; then
+		ONCE=1
+		PLAIN=1
+		MODULE=$3
+	elif [ "$1" = "--plain" ] && [ "$2" = "--once" ]; then
+		ONCE=1
+		PLAIN=1
+		MODULE=$3
+	else
+		usage_message
+		exit 1
+	fi
 fi
-MODULE=$1
 
+# Log all variables for debugging purposes.
 echo "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME" >>$TRACE
 echo "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME" >>$TRACE
 echo "Current DOCKER_NETWORK=$DOCKER_NETWORK" >>$TRACE
+
+echo "PLAIN=$PLAIN" >>$TRACE
+echo "ONCE=$ONCE" >>$TRACE
 
 echo "Checking if the user-defined bridge network exists." >>$TRACE
 if [ $(docker network ls | grep "$DOCKER_NETWORK" | wc -l) -eq 0 ]; then
@@ -234,7 +299,7 @@ fi
 
 echo "Checking if the odoo docker exists." >>$TRACE
 if [ $(docker ps -a | grep $DOCKER_ODOO | wc -l) -eq 0 ]; then
-	echo "Creating the odoo server to run the tests." >>$TRACE 
+	echo "Creating the odoo server to run the tests." >>$TRACE
 	docker create -v $(pwd):/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK" -e HOST=$DOCKER_PG "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
 else
 	echo "Docker $DOCKER_ODOO still exists, re-using it." >>$TRACE 2>&1
@@ -244,7 +309,7 @@ fi
 echo "Starting the postgres server." >>$TRACE
 docker start $DOCKER_PG >>$TRACE 2>&1
 
-if [ "$RUN_ONCE" -eq 0 ]; then
+if [ "$ONCE" -eq 0 ]; then
 	# Set handling of CTRL-C to allow the user to stop the loop.
 	trap ctrl_c INT
 
@@ -265,4 +330,5 @@ else
 	# Set handling of CTRL-C to allow the user to stop the loop.
 	trap ctrl_c_once INT
 	run_tests
+	exit $LAST_RUN_FAILED
 fi

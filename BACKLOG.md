@@ -1,17 +1,15 @@
 TO DO:
 
 MUST
+* Make the script testable.
+* Cover functionality with test suite.
+
 * Test fresh install on real ubuntu.
-* Update README
+* Update README.md
 
 SHOULD
 * Add parameter to allow specifying the version of postgres to use. (must delete + create dockers if necessary)
 * Add parameter to allow specifying the version of odoo to use. (must delete + create dockers if necessary)
-
-* add --plain option that does not color/clear/fancy output. This should make testing the script easier.
-* add --once parameter to do a single run (no loop)
-* Make the script testable. (fake docker logs/create/etc..  + -trace option should allow for rappid prototyping.)
-* exit codes 0 (all tests ok),1 (test failure) and 2 (ambiguous)
 
 COULD
 * Determine default postgres version automatically.
@@ -21,6 +19,9 @@ WOULD
 
 DONE:
 
+* ~~add --plain option that does not color/clear/fancy output. This should make testing the script easier.~~
+* ~~add --once parameter to do a single run (no loop)~~
+* ~~exit codes 0 (all tests ok),1 (test failure) and 2 (ambiguous)~~
 * ~~combine remove script into the main script as --delete.~~
 * ~~Rename the dockers to run-odoo-test-* instead of om-hospital-*~~
 * ~~remove the use of --link for connection the database to the odoo docker (deprecated). Should use user-defined bridge network. (https://docs.docker.com/network/bridge/)~~
