@@ -18,7 +18,7 @@ DOCKER_ODOO_IMAGE_NAME=odoo:15
 # Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
 DOCKER_PG_IMAGE_NAME=postgres:10
 # Name of the user-defined bridge network that connects the odoo container with the database container.
-DOCKER_NETWORK_NAME=run-odoo-tests-network
+DOCKER_NETWOR=run-odoo-tests-network
 
 function remove_temp_files {
 	# Clean up temporary files
@@ -64,7 +64,23 @@ function help_message {
 	echo "    --tail         Tails the output of the test run."
 	echo "                   You should start <run-test.sh module_name> first, and issue run-test.sh --tail to view logs."
 	echo
+	echo "    --remove       Delete the database and odoo container, as well as the bridge network between them."
+	echo "                   The containers and network will be re-created when you run the tests next time."
+	echo "                   The exit code is 0, also when nothing needed to be / was deleted."
+	echo
 	echo "    --help         Displays this help message."
+	echo 
+	echo "Exit codes: (mostly useful in combination with --once)"
+	echo
+	echo "    0  All tests were run, and none of them failed."
+	echo "    1  All tests were run, and at least one of them failed."
+	echo "    2  A different (unkown) error occured during the execution of the script / running of the tests."
+}
+
+function delete_containers {
+	docker rm -f "$DOCKER_ODOO"
+	docker rm -f "$DOCKER_PG"
+	docker network rm "$DOCKER_NETWORK"
 }
 
 # Check if all dependencies are installed..
@@ -116,31 +132,37 @@ elif [ "$1" = "--tail" ]; then
 		echo "Please start ./run-tests.sh [module_name] first in a different console, then issue this command to tail the logs."
 	fi
 	exit 0
+elif [ "$1" = "--remove" ]; then
+	echo "Removing postgres and odoo containers used for running tests."
+	echo "They will be created automatically again when you run ./run-tests.sh."
+	delete_containers
+	echo "Done."
+	exit 0
 fi
 MODULE=$1
 
 echo "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME" >>$TRACE
 echo "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME" >>$TRACE
-echo "Current DOCKER_NETWORK_NAME=$DOCKER_NETWORK_NAME" >>$TRACE
+echo "Current DOCKER_NETWORK=$DOCKER_NETWORK" >>$TRACE
 
 echo "Checking if the user-defined bridge network exists." >>$TRACE
-if [ $(docker network ls | grep "$DOCKER_NETWORK_NAME" | wc -l) -eq 0 ]; then
+if [ $(docker network ls | grep "$DOCKER_NETWORK" | wc -l) -eq 0 ]; then
 	echo "Creating the user-defined bridge network." >>$TRACE
-	docker network create "$DOCKER_NETWORK_NAME" >>$TRACE 2>&1
+	docker network create "$DOCKER_NETWORK" >>$TRACE 2>&1
 fi
 
 echo "Checking if the postgres docker exists." >>$TRACE
 found_docker_pg=$(docker ps -a | grep $DOCKER_PG | wc -l)
 if [ $found_docker_pg -eq 0 ]; then
 	echo "Creating a postgres server." >>$TRACE
-	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_NAME" --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
+	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK" --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
 fi
 
 echo "Checking if the odoo docker exists." >>$TRACE
 found_docker_odoo=$(docker ps -a | grep $DOCKER_ODOO | wc -l)
 if [ $found_docker_odoo -eq 0 ]; then
 	echo "Creating the odoo server to run the tests." >>$TRACE
-	docker create -v ~/prj:/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK_NAME" -e HOST=$DOCKER_PG "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
+	docker create -v ~/prj:/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK" -e HOST=$DOCKER_PG "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
 fi
 
 # Remove any old files
