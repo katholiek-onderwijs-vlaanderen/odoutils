@@ -9,16 +9,21 @@ ERRORS=/tmp/run-tests-errors.txt
 LOG=/tmp/run-tests-logs.txt
 # Temp file where debug tracing is written. Tail it to debug the script.
 TRACE=/tmp/run-tests-trace.txt
+
 # Name of the docker container with odoo that runs the test suite.
 DOCKER_ODOO=run-odoo-tests-odoo
 # Name of the docker container that runs the postgres that is backing the odoo instance running the test suite.
 DOCKER_PG=run-odoo-tests-pg
+# Name of the user-defined bridge network that connects the odoo container with the database container.
+DOCKER_NETWORK=run-odoo-tests-network
+
 # Name of the docker image that is used to run the test suite.
 DOCKER_ODOO_IMAGE_NAME=odoo:15
 # Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
 DOCKER_PG_IMAGE_NAME=postgres:10
-# Name of the user-defined bridge network that connects the odoo container with the database container.
-DOCKER_NETWOR=run-odoo-tests-network
+
+# Run in loop, or run once. 0: loop / 1: once
+RUN_ONCE=0
 
 function remove_temp_files {
 	# Clean up temporary files
@@ -29,14 +34,18 @@ function remove_temp_files {
 	fi
 }
 
-function ctrl_c() {
-	echo $(tput sgr 0)
-	clear
+function ctrl_c_once() {
 	echo "Stopping odoo server" >>$TRACE
 	docker stop $DOCKER_ODOO >>$TRACE 2>&1
 	echo "Stopping postgres server" >>$TRACE
 	docker stop $DOCKER_PG >>$TRACE 2>&1
 	exit 0
+}
+
+function ctrl_c() {
+	echo $(tput sgr 0)
+	clear
+	ctrl_c_once
 }
 
 function please_install {
@@ -82,6 +91,71 @@ function delete_containers {
 	docker rm -f "$DOCKER_PG"
 	docker network rm "$DOCKER_NETWORK"
 }
+
+function run_tests {
+	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
+	echo "Timestamp when we are running: $timestamp" >>$TRACE
+
+	echo "(Re)starting the odoo server to run the test suite." >>$TRACE
+	docker restart $DOCKER_ODOO >>$TRACE 2>&1
+	docker logs -f --since $timestamp $DOCKER_ODOO 2>$LOG
+	echo "Server finisfed running the odoo test suite." >>$TRACE
+
+	cat $LOG | grep ".* ERROR odoo .*test.*FAIL:" >$ERRORS
+
+	if [ -s $ERRORS ]; then
+		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 1)"
+		clear
+
+		echo "Displaying FAILED message." >>$TRACE
+		figlet -c -t "FAILED!" 2>>$TRACE
+		echo
+
+		echo "Displaying list of failed tests." >>$TRACE
+		echo "$(tput smso)These tests failed:$(tput rmso)"
+		cat $ERRORS | sed 's/.*FAIL: //g' | cut -c -$(tput cols)
+		echo
+
+		error_count=$(cat $ERRORS | wc -l)
+		echo "Counted $error_count errors in the odoo logs." >>$TRACE
+
+		lines=$(expr $(tput lines) - 11 - $error_count)
+		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
+
+		echo "Logging stack traces of failures from logs." >>$TRACE
+		echo "$(tput smso)Traces of the first failures:$(tput rmso)"
+		cat /tmp/run-tests-logs.txt | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
+	elif [ $(cat $LOG | grep '.* ERROR odoo .*' | wc -l) -ne 0 ]; then
+		echo "Errors other than FAIL detected.." >>$TRACE
+		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 4)"
+		clear
+		figlet -c -t "Unknown" 2>>$TRACE
+		echo
+
+		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
+		lines=$(expr $(tput lines) - 9)
+
+		echo "Showing tail of odoo log on screen." >>$TRACE
+		echo "$(tput smso)Tail of logs:$(tput rmso)"
+		tail -n $lines $LOG | cut -c -$(tput cols)
+	else
+		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 2)"
+		clear
+
+		echo "Displaying SUCCESS message." >>$TRACE
+		figlet -c -t "Success" 2>>$TRACE
+		echo
+
+		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
+		lines=$(expr $(tput lines) - 9)
+
+		echo "Showing tail of odoo log on screen." >>$TRACE
+		echo "$(tput smso)Tail of logs:$(tput rmso)"
+		tail -n $lines $LOG | cut -c -$(tput cols)
+	fi
+}
+
+echo "*** Script starting..." >>$TRACE
 
 # Check if all dependencies are installed..
 command -v figlet >>$TRACE || please_install figlet figlet
@@ -159,92 +233,36 @@ if [ $found_docker_pg -eq 0 ]; then
 fi
 
 echo "Checking if the odoo docker exists." >>$TRACE
-found_docker_odoo=$(docker ps -a | grep $DOCKER_ODOO | wc -l)
-if [ $found_docker_odoo -eq 0 ]; then
-	echo "Creating the odoo server to run the tests." >>$TRACE
-	docker create -v ~/prj:/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK" -e HOST=$DOCKER_PG "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
+if [ $(docker ps -a | grep $DOCKER_ODOO | wc -l) -eq 0 ]; then
+	echo "Creating the odoo server to run the tests." >>$TRACE 
+	docker create -v $(pwd):/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK" -e HOST=$DOCKER_PG "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
+else
+	echo "Docker $DOCKER_ODOO still exists, re-using it." >>$TRACE 2>&1
 fi
-
-# Remove any old files
-remove_temp_files
-
-# Set handling of CTRL-C to allow the user to stop the loop.
-trap ctrl_c INT
 
 # Make sure database is started.
 echo "Starting the postgres server." >>$TRACE
 docker start $DOCKER_PG >>$TRACE 2>&1
 
-while true; do
-	hash=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
-	echo "Calculated hash for the folder where we are running AT START OF CYCLE: $hash" >>$TRACE
+if [ "$RUN_ONCE" -eq 0 ]; then
+	# Set handling of CTRL-C to allow the user to stop the loop.
+	trap ctrl_c INT
 
-	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
-	echo "Timestamp when we are running: $timestamp" >>$TRACE
+	while true; do
+		hash=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
+		echo "Calculated hash for the folder where we are running AT START OF CYCLE: $hash" >>$TRACE
 
-	echo "(Re)starting the odoo server to run the test suite." >>$TRACE
-	docker restart $DOCKER_ODOO >>$TRACE 2>&1
-	docker logs -f --since $timestamp $DOCKER_ODOO 2>$LOG
-	echo "Finished running the tests..." >>$TRACE
+		run_tests
 
-	echo "Server finised running the odoo test suite." >>$TRACE
-	cat $LOG | grep ".* ERROR odoo .*test.*FAIL:" >$ERRORS
-
-	if [ -s $ERRORS ]; then
-		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 1)"
-		clear
-
-		echo "Displaying FAILED message." >>$TRACE
-		figlet -c -t "FAILED!" 2>>$TRACE
-		echo
-
-		echo "Displaying list of failed tests." >>$TRACE
-		echo "$(tput smso)These tests failed:$(tput rmso)"
-		cat $ERRORS | sed 's/.*FAIL: //g' | cut -c -$(tput cols)
-		echo
-
-		error_count=$(cat $ERRORS | wc -l)
-		echo "Counted $error_count errors in the odoo logs." >>$TRACE
-
-		lines=$(expr $(tput lines) - 11 - $error_count)
-		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
-
-		echo "Logging stack traces of failures from logs." >>$TRACE
-		echo "$(tput smso)Traces of the first failures:$(tput rmso)"
-		cat /tmp/run-tests-logs.txt | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
-	elif [ $(cat $LOG | grep '.* ERROR odoo .*' | wc -l) -ne 0 ]; then
-		echo "Errors other than FAIL detected.." >>$TRACE
-		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 4)"
-		clear
-		figlet -c -t "Unknown" 2>>$TRACE
-		echo
-
-		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
-		lines=$(expr $(tput lines) - 9)
-
-		echo "Showing tail of odoo log on screen." >>$TRACE
-		echo "$(tput smso)Tail of logs:$(tput rmso)"
-		tail -n $lines $LOG | cut -c -$(tput cols)
-	else
-		echo -n "$(tput bold)$(tput setaf 7)$(tput setab 2)"
-		clear
-
-		echo "Displaying SUCCESS message." >>$TRACE
-		figlet -c -t "Success" 2>>$TRACE
-		echo
-
-		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
-		lines=$(expr $(tput lines) - 9)
-
-		echo "Showing tail of odoo log on screen." >>$TRACE
-		echo "$(tput smso)Tail of logs:$(tput rmso)"
-		tail -n $lines $LOG | cut -c -$(tput cols)
-	fi
-
-	hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
-	echo "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2" >>$TRACE
-	if [ "$hash" = "$hash2" ]; then
-		echo "Waiting for changes on the filesystem." >>$TRACE
-		inotifywait -r -q "$MODULE" >>$TRACE 2>&1
-	fi
-done
+		hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
+		echo "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2" >>$TRACE
+		if [ "$hash" = "$hash2" ]; then
+			echo "Waiting for changes on the filesystem." >>$TRACE
+			inotifywait -r -q "$MODULE" >>$TRACE 2>&1
+		fi
+	done
+else
+	# Set handling of CTRL-C to allow the user to stop the loop.
+	trap ctrl_c_once INT
+	run_tests
+fi
