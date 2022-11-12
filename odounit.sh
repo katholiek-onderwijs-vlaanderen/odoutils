@@ -108,7 +108,7 @@ function help_message {
 	echo "Open a second terminal session, while $0 is running, and inspect the tail of the odoo log:"
 	echo "$ $0 --tail"
 	echo
-	echo "Delete all containers and log files (by default containers are created and then reused):"
+	echo "Delete all containers and log files (by default containers are created and then reused for speed):"
 	echo "$ $0 --remove"
 }
 

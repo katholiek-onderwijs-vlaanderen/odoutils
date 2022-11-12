@@ -54,6 +54,6 @@ Open a second terminal session, while ./odounit.sh is running, and inspect the t
 
 `$ ./odounit.sh --tail`
 
-Delete all containers and log files (by default containers are created and then reused):
+Delete all containers and log files (by default containers are created and then reused for speed):
 
 `$ ./odounit.sh --remove`
