@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # e - script stops on error (return != 0)
 # u - error if undefined variable
@@ -63,14 +63,18 @@ function please_install {
 }
 
 function usage_message {
-	echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
 	echo "Usage: $0 [--help | --tail | --remove] [--plain] [--once] [odoo_module_name]"
 }
 
 function help_message {
-	echo "Specify the odoo module folder to run the test suite:"
+	echo "$0 is a test suite runner for odoo modules. It is designed to allow you get quick feedback on changes"
+	echo "you make in the test suite or the implementation of your module."
+	echo "It can be used interactively (default), in which case it will continuously monitor your sources and"
+	echo "(re)run the test suite when a change is detected."
 	echo
-	echo "$ $0 my_module"
+	echo "Alternatively you can use it to run a test suite once, and check to exit code for scripting purposes."
+	echo
+	echo "It uses docker containers to isolate the entire process of running the tests from the rest of your system."
 	echo
 	echo "Options:"
 	echo
@@ -87,7 +91,7 @@ function help_message {
 	echo "    --tail         Tails the output of the test run."
 	echo "                   You should start <$0 module_name> first, and issue $0 --tail to view logs."
 	echo
-	echo "Exit codes: (mostly useful in combination with --once)"
+	echo "Exit codes: (mostly useful in combination with --once --plain, for scripting purposes)"
 	echo
 	echo "    0  All tests were run, and none of them failed."
 	echo "    1  All tests were run, and at least one of them failed."
@@ -101,6 +105,11 @@ function help_message {
 	echo "Run the test suite for module 'my_module' once and output in plain text:"
 	echo "$ $0 --plain --once my_module"
 	echo
+	echo "Open a second terminal session, while $0 is running, and inspect the tail of the odoo log:"
+	echo "$ $0 --tail"
+	echo
+	echo "Delete all containers and log files (by default containers are created and then reused):"
+	echo "$ $0 --remove"
 }
 
 function delete_containers {
@@ -283,6 +292,7 @@ elif [ $# -eq 2 ]; then
 		MODULE=$2
 	else
 		trace "Illegal parameter combination. Showing usage message to user."
+		echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
 		usage_message
 		exit 1
 	fi
@@ -301,11 +311,13 @@ elif [ $# -eq 3 ]; then
 		trace "Module to run test suite for: $MODULE"
 	else
 		trace "Illegal parameter combination. Showing usage message to user."
+		echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
 		usage_message
 		exit 1
 	fi
 else
 	trace "Illegal parameter combination. Showing usage message to user."
+	echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
 	usage_message
 	exit 1
 fi
