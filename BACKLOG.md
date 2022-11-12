@@ -1,7 +1,7 @@
 TO DO:
 
 MUST
-* Make the script testable.
+* Speed up unit testing.
 * Cover functionality with test suite.
 
 * Test fresh install on real ubuntu.
@@ -21,6 +21,7 @@ WOULD
 
 DONE:
 
+* ~~Make the script testable.~~
 * ~~add --plain option that does not color/clear/fancy output. This should make testing the script easier.~~
 * ~~add --once parameter to do a single run (no loop)~~
 * ~~exit codes 0 (all tests ok),1 (test failure) and 2 (ambiguous)~~
