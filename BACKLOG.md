@@ -1,8 +1,6 @@
 TO DO:
 
 MUST
-* Speed up unit testing.
-* Cover functionality with test suite.
 
 * Test fresh install on real ubuntu.
 * Update README.md
@@ -21,6 +19,8 @@ WOULD
 
 DONE:
 
+* ~~Cover functionality with test suite.~~ 
+* ~~Speed up unit testing.~~
 * ~~Make the script testable.~~
 * ~~add --plain option that does not color/clear/fancy output. This should make testing the script easier.~~
 * ~~add --once parameter to do a single run (no loop)~~

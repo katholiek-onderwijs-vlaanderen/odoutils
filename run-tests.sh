@@ -10,11 +10,14 @@ LOG=/tmp/run-tests-logs.txt
 # Temp file where debug tracing is written. Tail it to debug the script.
 TRACE=/tmp/run-tests-trace.txt
 
-# Name of the docker container with odoo that runs the test suite.
+# Base names for dockers.
+# The actual name incorporates a hash that is dependent on module to test, odoo version and database version.
+
+# Base name of the docker container with odoo that runs the test suite.
 DOCKER_ODOO=run-odoo-tests-odoo
-# Name of the docker container that runs the postgres that is backing the odoo instance running the test suite.
+# Base name of the docker container that runs the postgres that is backing the odoo instance running the test suite.
 DOCKER_PG=run-odoo-tests-pg
-# Name of the user-defined bridge network that connects the odoo container with the database container.
+# Base name of the user-defined bridge network that connects the odoo container with the database container.
 DOCKER_NETWORK=run-odoo-tests-network
 
 # Name of the docker image that is used to run the test suite.
@@ -29,6 +32,10 @@ PLAIN=0
 # Did the last run of the test suite fail? 0: All tests passed, 1: At least one test failed, 2: Some other (unknown error) occured.
 # -1 if test suite was not yet run.
 LAST_RUN_FAILED=-1
+
+function trace() {
+	echo "$1" >>"$TRACE" 2>&1
+}
 
 function remove_temp_files {
 	# Clean up temporary files
@@ -63,7 +70,8 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [--configure | --help | --tail] [odoo_module_name]"
+	echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
+	echo "Usage: $0 [--help | --tail | --remove] [--plain] [--once] [odoo_module_name]"
 }
 
 function help_message {
@@ -73,16 +81,18 @@ function help_message {
 	echo
 	echo "Options:"
 	echo
-	echo "    --configure    Prompts for configuration of the odoo version and postgres version to use for running the test suite."
+	echo "    --help         Displays this help message."
 	echo
-	echo "    --tail         Tails the output of the test run."
-	echo "                   You should start <run-test.sh module_name> first, and issue run-test.sh --tail to view logs."
+	echo "    --once         Run test suite once. Do not enter loop to re-run test suite on file change."
+	echo
+	echo "    --plain        Do not output in color. Do not clear screen."
 	echo
 	echo "    --remove       Delete the database and odoo container, as well as the bridge network between them."
 	echo "                   The containers and network will be re-created when you run the tests next time."
 	echo "                   The exit code is 0, also when nothing needed to be / was deleted."
 	echo
-	echo "    --help         Displays this help message."
+	echo "    --tail         Tails the output of the test run."
+	echo "                   You should start <run-test.sh module_name> first, and issue run-test.sh --tail to view logs."
 	echo
 	echo "Exit codes: (mostly useful in combination with --once)"
 	echo
@@ -101,9 +111,25 @@ function help_message {
 }
 
 function delete_containers {
-	docker rm -f "$DOCKER_ODOO"
-	docker rm -f "$DOCKER_PG"
-	docker network rm "$DOCKER_NETWORK"
+	if [ $(docker ps -a | grep "$DOCKER_ODOO" | wc -l) -gt 0 ]; then
+		trace "Deleting all odoo containers."
+		docker rm -f $(docker ps -a | grep "$DOCKER_ODOO" | cut -f 1 -d ' ') >>$TRACE
+	else
+		trace "No odoo containers found to delete."
+	fi
+	if [ $(docker ps -a | grep "$DOCKER_PG" | wc -l) -gt 0 ]; then
+		trace "Deleting all pg containers."
+		docker rm -f $(docker ps -a | grep "$DOCKER_PG" | cut -f 1 -d ' ') >>$TRACE
+	else
+		trace "No pg containers found to delete."
+	fi
+
+	if [ $(docker network ls | grep "$DOCKER_NETWORK" | wc -l) -gt 0 ]; then
+		trace "Deleting all networks."
+		docker network rm $(docker network ls | grep "$DOCKER_NETWORK" | cut -f 1 -d ' ') >>$TRACE
+	else
+		trace "No bridge networks found to delete."
+	fi
 }
 
 function run_tests {
@@ -111,8 +137,8 @@ function run_tests {
 	echo "Timestamp when we are running: $timestamp" >>$TRACE
 
 	echo "(Re)starting the odoo server to run the test suite." >>$TRACE
-	docker restart $DOCKER_ODOO >>$TRACE 2>&1
-	docker logs -f --since $timestamp $DOCKER_ODOO 2>$LOG
+	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
+	docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME 2>$LOG
 	echo "Server finisfed running the odoo test suite." >>$TRACE
 
 	cat $LOG | grep ".* ERROR odoo .*test.*FAIL:" >$ERRORS
@@ -222,21 +248,9 @@ if [ $not_found -ne 0 ]; then
 	exit 1
 fi
 
-# Load configuration file first (before processing of command line arguments)
-if [ -f .run-odoo-tests/config ]; then
-	echo "Found configuration file, and sourcing it." >>$TRACE
-	source .run-odoo-tests/config
-else
-	echo "Configuration missing, continuing with defaults." >>$TRACE
-fi
-
 # Process the command line arguments.
 if [ $# -eq 1 ]; then
-	if [ "$1" = "--configure" ]; then
-		echo "Starting configuration flow." >>$TRACE
-		echo "TO DO: Implement configuration flow"
-		exit 1
-	elif [ "$1" = "--help" ]; then
+	if [ "$1" = "--help" ]; then
 		echo "Showing help message." >>$TRACE
 		usage_message
 		echo
@@ -263,7 +277,7 @@ elif [ $# -eq 2 ]; then
 	if [ "$1" = "--once" ]; then
 		ONCE=1
 		MODULE=$2
-	elif [ "$1" == "--plain"]; then
+	elif [ "$1" == "--plain" ]; then
 		PLAIN=1
 		MODULE=$2
 	else
@@ -290,33 +304,47 @@ echo "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME" >>$TRACE
 echo "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME" >>$TRACE
 echo "Current DOCKER_NETWORK=$DOCKER_NETWORK" >>$TRACE
 
+# Calculate full names for containers and network bridge
+DOCKER_HASH=$(echo "$MODULE" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
+DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
+DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
+DOCKER_ODOO_FULL_NAME="$DOCKER_ODOO-$DOCKER_HASH"
+trace "DOCKER_HASH=$DOCKER_HASH"
+trace "DOCKER_NETWORK_FULL_NAME=$DOCKER_NETWORK_FULL_NAME"
+trace "DOCKER_PG_FULL_NAME=$DOCKER_PG_FULL_NAME"
+trace "DOCKER_ODOO_FULL_NAME=$DOCKER_ODOO_FULL_NAME"
+
 echo "PLAIN=$PLAIN" >>$TRACE
 echo "ONCE=$ONCE" >>$TRACE
 
 echo "Checking if the user-defined bridge network exists." >>$TRACE
-if [ $(docker network ls | grep "$DOCKER_NETWORK" | wc -l) -eq 0 ]; then
+if [ $(docker network ls | grep "$DOCKER_NETWORK_FULL_NAME" | wc -l) -eq 0 ]; then
 	echo "Creating the user-defined bridge network." >>$TRACE
-	docker network create "$DOCKER_NETWORK" >>$TRACE 2>&1
+	docker network create "$DOCKER_NETWORK_FULL_NAME" >>$TRACE 2>&1
+else
+	trace "User defined bridge network $DOCKER_NETWORK_FULL_NAME still exists, re-using it."
 fi
 
 echo "Checking if the postgres docker exists." >>$TRACE
-found_docker_pg=$(docker ps -a | grep $DOCKER_PG | wc -l)
+found_docker_pg=$(docker ps -a | grep "$DOCKER_PG_FULL_NAME" | wc -l)
 if [ $found_docker_pg -eq 0 ]; then
 	echo "Creating a postgres server." >>$TRACE
-	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK" --name "$DOCKER_PG" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
+	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_FULL_NAME" --name "$DOCKER_PG_FULL_NAME" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
+else
+	trace "Docker $DOCKER_PG_FULL_NAME still exists, re-using it."
 fi
 
 echo "Checking if the odoo docker exists." >>$TRACE
-if [ $(docker ps -a | grep $DOCKER_ODOO | wc -l) -eq 0 ]; then
+if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	echo "Creating the odoo server to run the tests." >>$TRACE
-	docker create -v $(pwd):/mnt/extra-addons --name "$DOCKER_ODOO" --network "$DOCKER_NETWORK" -e HOST=$DOCKER_PG "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
+	docker create -v $(pwd):/mnt/extra-addons --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
 else
-	echo "Docker $DOCKER_ODOO still exists, re-using it." >>$TRACE 2>&1
+	echo "Docker $DOCKER_ODOO_FULL_NAME still exists, re-using it." >>$TRACE 2>&1
 fi
 
 # Make sure database is started.
 echo "Starting the postgres server." >>$TRACE
-docker start $DOCKER_PG >>$TRACE 2>&1
+docker start $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 
 if [ "$ONCE" -eq 0 ]; then
 	# Set handling of CTRL-C to allow the user to stop the loop.
