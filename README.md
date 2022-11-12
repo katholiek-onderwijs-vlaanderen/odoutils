@@ -1,7 +1,7 @@
 # odoutils.sh
 
 Set of command line utilities for odoo development.
-Currently a single command is implemented that allows you to run the test suite for a module: odounit.sh
+Currently a single command is implemented that allows you to run the test suite for a module: `odounit.sh`
 
 ## odounit.sh
 
