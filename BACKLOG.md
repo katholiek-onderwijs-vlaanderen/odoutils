@@ -3,21 +3,23 @@ TO DO:
 MUST
 
 * Test fresh install on real ubuntu.
-* Update README.md
+* Update README.md to add user documentation
+* Add technical docs.
 
 SHOULD
-* Add parameter to allow specifying the version of postgres to use. (must delete + create dockers if necessary) (will require refactoring options handling)
-* Add parameter to allow specifying the version of odoo to use. (must delete + create dockers if necessary) (will require refactoring options handling)
-* Rename repository to odoutils.sh,
-* Add odorun.sh for running one or more modules from docker.
+* Add parameter to allow specifying the version of postgres to use. (will require refactoring options handling)
+* Add parameter to allow specifying the version of odoo to use. (will require refactoring options handling)
+* Create odorun.sh for running one or more modules from docker.
 
 COULD
 
 WILL NOT
-* Determine default postgres version automatically.
+* Determine default postgres version automatically per version of odoo.
 
 DONE:
 
+* ~~Added set -euo pipefail to make script more robust.~~
+* ~~Rename repository to odoutils.sh,~~
 * ~~Rename test script to odounit.sh~~ 
 * ~~--remove should use prefix on container / network name to select, making --remove more robust.~~
 * ~~Add prefix to all container names + network name~~

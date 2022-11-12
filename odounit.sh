@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# Temp file where the detected FAILs are stored.
-ERRORS=/tmp/odounit-odoo-errors.log
+# e - script stops on error (return != 0)
+# u - error if undefined variable
+# o pipefail - script fails if one of the piped commands fails
+# x - output each line for debugging purposes.
+set -euo pipefail
+#set -x
+
 # Temp file where the output of the docker running the test suite is stored.
 LOG=/tmp/odounit-odoo-container.log
 # Temp file where debug tracing is written. Tail it to debug the script.
@@ -119,10 +124,9 @@ function delete_containers {
 		trace "No bridge networks found to delete."
 	fi
 
-	trace "Truncating errors, log and trace files."
-	truncate $ERRORS >>$TRACE 2>&1
+	trace "Truncating log and trace files."
 	truncate $LOG >>$TRACE 2>&1
-	trace "trunciating trace files. BYE BYE! :)"
+	trace "truncating trace files. BYE BYE! :)"
 	truncate $TRACE >/dev/null 2>&1
 }
 
@@ -135,9 +139,7 @@ function run_tests {
 	docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME 2>$LOG
 	trace "Server finisfed running the odoo test suite."
 
-	cat $LOG | grep ".* ERROR odoo .*test.*FAIL:" >$ERRORS
-
-	if [ -s $ERRORS ]; then
+	if [ $(cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | wc -l) -ne 0 ]; then
 		LAST_RUN_FAILED=1
 
 		if [ "$PLAIN" -eq 0 ]; then
@@ -156,10 +158,10 @@ function run_tests {
 		else
 			echo "These tests failed:"
 		fi
-		cat $ERRORS | sed 's/.*FAIL: //g' | cut -c -$(tput cols)
+		cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | sed 's/.*FAIL: //g' | cut -c -$(tput cols)
 		echo
 
-		error_count=$(cat $ERRORS | wc -l)
+		error_count=$(cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | wc -l)
 		trace "Counted $error_count errors in the odoo logs."
 
 		lines=$(expr $(tput lines) - 11 - $error_count)
@@ -185,8 +187,8 @@ function run_tests {
 		figlet -c -t "Unknown" 2>>$TRACE
 		echo
 
-		trace "Number of lines to tail on the rest of the screen: $lines"
 		lines=$(expr $(tput lines) - 9)
+		trace "Number of lines to tail on the rest of the screen: $lines"
 
 		trace "Showing tail of odoo log on screen."
 
@@ -208,8 +210,8 @@ function run_tests {
 		figlet -c -t "Success" 2>>$TRACE
 		echo
 
-		trace "Number of lines to tail on the rest of the screen: $lines"
 		lines=$(expr $(tput lines) - 9)
+		trace "Number of lines to tail on the rest of the screen: $lines"
 
 		echo "Showing tail of odoo log on screen." >>$TRACE
 		if [ "$PLAIN" -eq 0 ]; then
@@ -231,10 +233,8 @@ command -v inotifywait >>$TRACE 2>&1 || please_install inotifywait inotify-tools
 
 # If we are running on WSL, check that the docker command
 # is telling us to start the docker engine via the UI...
-docker >/tmp/docker.log 2>&1
-not_found=$(cat /tmp/docker.log | grep "could not be found" | wc -l)
-if [ $not_found -ne 0 ]; then
-	cat /tmp/docker.log
+if [ $(docker 2>&1 | grep "could not be found" | wc -l) -ne 0 ]; then
+	docker
 	echo
 	echo "***************************************************************************"
 	echo "*** Please make sure the docker engine is started using docker desktop. ***"
