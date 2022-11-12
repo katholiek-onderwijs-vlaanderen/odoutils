@@ -72,7 +72,7 @@ function help_message {
 	echo "It can be used interactively (default), in which case it will continuously monitor your sources and"
 	echo "(re)run the test suite when a change is detected. A clear visual message is given when tests pass or fail."
 	echo
-	echo "Alternatively you can use it to run a test suite once, and check to exit code for scripting purposes in a CI/CD setup."
+	echo "Alternatively you can use it to run a test suite once, and check the exit code for scripting purposes in a CI/CD setup."
 	echo
 	echo "It uses docker containers to isolate the entire process of running the tests from the rest of your system."
 	echo
@@ -86,7 +86,7 @@ function help_message {
 	echo
 	echo "    --remove       Delete the database and odoo container, as well as the bridge network between them."
 	echo "                   The containers and network will be re-created when you run the tests next time."
-	echo "                   The exit code is 0, also when nothing needed to be / was deleted."
+	echo "                   The exit code is 0, also when nothing was deleted."
 	echo
 	echo "    --tail         Tails the output of the test run."
 	echo "                   You should start <$0 module_name> first, and issue $0 --tail to view logs."

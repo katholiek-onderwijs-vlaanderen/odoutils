@@ -15,7 +15,7 @@ It can be used interactively (default), in which case it will continuously monit
 ![Success](/docs/odounit-sh-success.png)
 ![Failed](/docs/odounit-sh-failed.png)
 
-Alternatively you can use it to run a test suite once, and check to exit code for scripting purposes in a CI/CD setup.
+Alternatively you can use it to run a test suite once, and check the exit code for scripting purposes in a CI/CD setup.
 
 It uses docker containers to isolate the entire process of running the tests from the rest of your system.
 
@@ -26,7 +26,7 @@ It uses docker containers to isolate the entire process of running the tests fro
 | `--help`     | Displays help message. |
 | `--once`     | Run test suite once. Do not enter loop to re-run test suite on file change. |
 | `--plain`    | Do not output in color. Do not clear screen. |
-| `--remove`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the tests next time.<br/> The exit code is 0, also when nothing needed to be / was deleted. |
+| `--remove`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the tests next time.<br/> The exit code is 0, also when nothing was deleted. |
 | `--tail`     | Tails the output of the test run.<br/> You should start `./odounit.sh module_name` first, and issue `./odounit.sh --tail` to view logs. |
 
 ### Exit codes:
