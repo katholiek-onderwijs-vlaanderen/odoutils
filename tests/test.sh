@@ -65,4 +65,10 @@ function testRunWithOptionHelpOutputsHelp() {
     assertNotEquals "Running with --help should output Examples help." $(cat $LOG | grep "Examples" | wc -l) 0
 }
 
+function testNoOptionsShowsUsage() {
+    "$CMD" >"$LOG" 2>&1
+
+    assertNotEquals "Running without any parameters should output Usage." $(cat $LOG | grep "Usage" | wc -l) 0
+}
+
 . shunit2

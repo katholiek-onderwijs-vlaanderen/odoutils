@@ -5,6 +5,7 @@
     'name': 'Module without failure',
     'version': '1.0.0',
     'author': 'Katholiek Onderwijs Vlaanderen vzw',
+    'license': 'LGPL-3',
     'depends': [
     ],
     'summary': "Module without failures - summary",

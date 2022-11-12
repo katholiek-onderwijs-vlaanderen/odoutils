@@ -314,6 +314,10 @@ elif [ $# -eq 3 ]; then
 		usage_message
 		exit 1
 	fi
+else
+	trace "Illegal parameter combination. Showing usage message to user."
+	usage_message
+	exit 1
 fi
 
 # Log all variables for debugging purposes.
