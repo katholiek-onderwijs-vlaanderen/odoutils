@@ -12,7 +12,7 @@ you make in the test suite or the implementation of your module.
 It can be used interactively (default), in which case it will continuously monitor your sources and
 (re)run the test suite when a change is detected. A clear visual message is given when tests pass or fail.
 
-Alternatively you can use it to run a test suite once, and check to exit code for scripting purposes.
+Alternatively you can use it to run a test suite once, and check to exit code for scripting purposes in a CI/CD setup.
 
 It uses docker containers to isolate the entire process of running the tests from the rest of your system.
 
