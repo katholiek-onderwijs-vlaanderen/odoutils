@@ -89,7 +89,7 @@ function help_message {
 	echo "                   The exit code is 0, also when nothing was deleted."
 	echo
 	echo "    --tail         Tails the output of the test run."
-	echo "                   You should start <$0 module_name> first, and issue $0 --tail to view logs."
+	echo "                   You should start <$0 module_name> first, and issue $0 --tail to view logs in a separate terminal session."
 	echo
 	echo "Exit codes: (mostly useful in combination with --once --plain, for scripting purposes)"
 	echo
