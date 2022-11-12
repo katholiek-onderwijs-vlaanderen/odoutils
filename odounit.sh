@@ -70,7 +70,7 @@ function help_message {
 	echo "$0 is a test suite runner for odoo modules. It is designed to allow you get quick feedback on changes"
 	echo "you make in the test suite or the implementation of your module."
 	echo "It can be used interactively (default), in which case it will continuously monitor your sources and"
-	echo "(re)run the test suite when a change is detected."
+	echo "(re)run the test suite when a change is detected. A clear visual message is given when tests pass or fail."
 	echo
 	echo "Alternatively you can use it to run a test suite once, and check to exit code for scripting purposes."
 	echo

@@ -10,7 +10,7 @@ Currently a single command is implemented that allows you to run the test suite 
 `./odounit.sh` is a test suite runner for odoo modules. It is designed to allow you get quick feedback on changes
 you make in the test suite or the implementation of your module.
 It can be used interactively (default), in which case it will continuously monitor your sources and
-(re)run the test suite when a change is detected.
+(re)run the test suite when a change is detected. A clear visual message is given when tests pass or fail.
 
 Alternatively you can use it to run a test suite once, and check to exit code for scripting purposes.
 
