@@ -35,9 +35,9 @@ Mostly useful in combination with --once --plain, for scripting purposes.
 
 | Code | Description |
 | ---- | ----------- |
-| 0    | All tests were run, and none of them failed. |
-| 1    | All tests were run, and at least one of them failed. |
-| 2    | A different (unkown) error occured during running of the tests. (Module install failed / ...) |
+| 0    | All tests passed. |
+| 1    | At least one test failed. |
+| 2    | An (unkown) error occured during running of the tests. (Module install failed / ...) |
 
 ### Examples:
 

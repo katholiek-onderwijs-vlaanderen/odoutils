@@ -93,9 +93,9 @@ function help_message {
 	echo
 	echo "Exit codes: (mostly useful in combination with --once --plain, for scripting purposes)"
 	echo
-	echo "    0  All tests were run, and none of them failed."
-	echo "    1  All tests were run, and at least one of them failed."
-	echo "    2  A different (unkown) error occured during running of the tests. (Module install failed / ...)"
+	echo "    0  All tests passed."
+	echo "    1  At least one test failed."
+	echo "    2  An (unkown) error occured during running of the tests. (Module install failed / ...)"
 	echo
 	echo "Examples:"
 	echo
