@@ -38,6 +38,10 @@ function trace() {
 }
 
 function remove_temp_files {
+	truncate $ERRORS
+	truncate $LOG
+	truncate $TRACE
+
 	# Clean up temporary files
 	rm $ERRORS >>$TRACE 2>&1
 	rm $LOG >>$TRACE 2>&1
@@ -47,9 +51,9 @@ function remove_temp_files {
 }
 
 function ctrl_c_once() {
-	echo "Stopping odoo server" >>$TRACE
+	trace "Stopping odoo server"
 	docker stop $DOCKER_ODOO >>$TRACE 2>&1
-	echo "Stopping postgres server" >>$TRACE
+	trace "Stopping postgres server"
 	docker stop $DOCKER_PG >>$TRACE 2>&1
 	exit 0
 }
@@ -134,12 +138,12 @@ function delete_containers {
 
 function run_tests {
 	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
-	echo "Timestamp when we are running: $timestamp" >>$TRACE
+	trace "Timestamp when we are running: $timestamp"
 
-	echo "(Re)starting the odoo server to run the test suite." >>$TRACE
+	trace "(Re)starting the odoo server to run the test suite."
 	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
 	docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME 2>$LOG
-	echo "Server finisfed running the odoo test suite." >>$TRACE
+	trace "Server finisfed running the odoo test suite."
 
 	cat $LOG | grep ".* ERROR odoo .*test.*FAIL:" >$ERRORS
 
@@ -151,11 +155,11 @@ function run_tests {
 			clear
 		fi
 
-		echo "Displaying FAILED message." >>$TRACE
+		trace "Displaying FAILED message."
 		figlet -c -t "FAILED!" 2>>$TRACE
 		echo
 
-		echo "Displaying list of failed tests." >>$TRACE
+		trace "Displaying list of failed tests."
 
 		if [ "$PLAIN" -eq 0 ]; then
 			echo "$(tput smso)These tests failed:$(tput rmso)"
@@ -166,12 +170,12 @@ function run_tests {
 		echo
 
 		error_count=$(cat $ERRORS | wc -l)
-		echo "Counted $error_count errors in the odoo logs." >>$TRACE
+		trace "Counted $error_count errors in the odoo logs."
 
 		lines=$(expr $(tput lines) - 11 - $error_count)
-		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
+		trace "Number of lines to tail on the rest of the screen: $lines"
 
-		echo "Logging stack traces of failures from logs." >>$TRACE
+		trace "Logging stack traces of failures from logs."
 		if [ "$PLAIN" -eq 0 ]; then
 			echo "$(tput smso)Traces of the first failures:$(tput rmso)"
 		else
@@ -181,7 +185,7 @@ function run_tests {
 	elif [ $(cat $LOG | grep '.* ERROR odoo .*' | wc -l) -ne 0 ]; then
 		LAST_RUN_FAILED=2
 
-		echo "Errors other than FAIL detected.." >>$TRACE
+		trace "Errors other than FAIL detected.."
 
 		if [ "$PLAIN" -eq 0 ]; then
 			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 4)"
@@ -191,10 +195,10 @@ function run_tests {
 		figlet -c -t "Unknown" 2>>$TRACE
 		echo
 
-		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
+		trace "Number of lines to tail on the rest of the screen: $lines"
 		lines=$(expr $(tput lines) - 9)
 
-		echo "Showing tail of odoo log on screen." >>$TRACE
+		trace "Showing tail of odoo log on screen."
 
 		if [ "$PLAIN" -eq 0 ]; then
 			echo "$(tput smso)Tail of logs:$(tput rmso)"
@@ -210,11 +214,11 @@ function run_tests {
 			clear
 		fi
 
-		echo "Displaying SUCCESS message." >>$TRACE
+		trace "Displaying SUCCESS message."
 		figlet -c -t "Success" 2>>$TRACE
 		echo
 
-		echo "Number of lines to tail on the rest of the screen: $lines" >>$TRACE
+		trace "Number of lines to tail on the rest of the screen: $lines"
 		lines=$(expr $(tput lines) - 9)
 
 		echo "Showing tail of odoo log on screen." >>$TRACE
@@ -227,13 +231,13 @@ function run_tests {
 	fi
 }
 
-echo "*** Script starting..." >>$TRACE
+trace "*** Script starting..."
 
 # Check if all dependencies are installed..
-command -v figlet >>$TRACE || please_install figlet figlet
-command -v docker >>$TRACE || please_install docker docker.io
-command -v tput >>$TRACE || please_install tput tput
-command -v inotifywait >>$TRACE || please_install inotifywait inotify-tools
+command -v figlet >>$TRACE 2>&1 || please_install figlet figlet
+command -v docker >>$TRACE 2>&1 || please_install docker docker.io
+command -v tput >>$TRACE 2>&1 || please_install tput tput
+command -v inotifywait >>$TRACE 2>&1 || please_install inotifywait inotify-tools
 
 # If we are running on WSL, check that the docker command
 # is telling us to start the docker engine via the UI...
@@ -245,13 +249,14 @@ if [ $not_found -ne 0 ]; then
 	echo "***************************************************************************"
 	echo "*** Please make sure the docker engine is started using docker desktop. ***"
 	echo "***************************************************************************"
+	echo
 	exit 1
 fi
 
 # Process the command line arguments.
 if [ $# -eq 1 ]; then
 	if [ "$1" = "--help" ]; then
-		echo "Showing help message." >>$TRACE
+		trace "--help detected -> Showing help message."
 		usage_message
 		echo
 		help_message
@@ -259,50 +264,62 @@ if [ $# -eq 1 ]; then
 		exit 1
 	elif [ "$1" = "--tail" ]; then
 		if [ -s $LOG ]; then
+			trace "--tail detected. Starting tail -f on odoo container log."
 			tail -f $LOG
 		else
+			trace "--tail detected, but no log file found. Showing tip to user."
 			echo "Please start $0 [module_name] first in a different console, then issue this command to tail the logs."
 		fi
 		exit 0
 	elif [ "$1" = "--remove" ]; then
+		trace "--remove detected. deleting conatiner + networks."
 		echo "Removing postgres and odoo containers used for running tests."
 		echo "They will be created automatically again when you run $0."
 		delete_containers
 		echo "Done."
 		exit 0
 	else
+		trace "Only command line parameter is the module name: $1"
 		MODULE=$1
 	fi
 elif [ $# -eq 2 ]; then
 	if [ "$1" = "--once" ]; then
+		trace "--once detected. Setting ONCE=1."
 		ONCE=1
 		MODULE=$2
 	elif [ "$1" == "--plain" ]; then
+		trace "--plain detected. Setting PLAIN=1."
 		PLAIN=1
 		MODULE=$2
 	else
+		trace "Illegal parameter combination. Showing usage message to user."
 		usage_message
 		exit 1
 	fi
 elif [ $# -eq 3 ]; then
 	if [ "$1" = "--once" ] && [ "$2" = "--plain" ]; then
+		trace "--once --plain detected. Setting ONCE=1 and PLAIN=1."
 		ONCE=1
 		PLAIN=1
 		MODULE=$3
+		trace "Module to run test suite for: $MODULE"
 	elif [ "$1" = "--plain" ] && [ "$2" = "--once" ]; then
+		trace "--plain --once detected. Setting ONCE=1 and PLAIN=1."
 		ONCE=1
 		PLAIN=1
 		MODULE=$3
+		trace "Module to run test suite for: $MODULE"
 	else
+		trace "Illegal parameter combination. Showing usage message to user."
 		usage_message
 		exit 1
 	fi
 fi
 
 # Log all variables for debugging purposes.
-echo "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME" >>$TRACE
-echo "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME" >>$TRACE
-echo "Current DOCKER_NETWORK=$DOCKER_NETWORK" >>$TRACE
+trace "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME"
+trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
+trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
 DOCKER_HASH=$(echo "$MODULE" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
@@ -314,36 +331,36 @@ trace "DOCKER_NETWORK_FULL_NAME=$DOCKER_NETWORK_FULL_NAME"
 trace "DOCKER_PG_FULL_NAME=$DOCKER_PG_FULL_NAME"
 trace "DOCKER_ODOO_FULL_NAME=$DOCKER_ODOO_FULL_NAME"
 
-echo "PLAIN=$PLAIN" >>$TRACE
-echo "ONCE=$ONCE" >>$TRACE
+trace "PLAIN=$PLAIN"
+trace "ONCE=$ONCE"
 
 echo "Checking if the user-defined bridge network exists." >>$TRACE
 if [ $(docker network ls | grep "$DOCKER_NETWORK_FULL_NAME" | wc -l) -eq 0 ]; then
-	echo "Creating the user-defined bridge network." >>$TRACE
+	trace "Creating the user-defined bridge network."
 	docker network create "$DOCKER_NETWORK_FULL_NAME" >>$TRACE 2>&1
 else
 	trace "User defined bridge network $DOCKER_NETWORK_FULL_NAME still exists, re-using it."
 fi
 
-echo "Checking if the postgres docker exists." >>$TRACE
+trace "Checking if the postgres docker exists."
 found_docker_pg=$(docker ps -a | grep "$DOCKER_PG_FULL_NAME" | wc -l)
 if [ $found_docker_pg -eq 0 ]; then
-	echo "Creating a postgres server." >>$TRACE
+	trace "Creating a postgres server."
 	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_FULL_NAME" --name "$DOCKER_PG_FULL_NAME" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
 else
 	trace "Docker $DOCKER_PG_FULL_NAME still exists, re-using it."
 fi
 
-echo "Checking if the odoo docker exists." >>$TRACE
+trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
-	echo "Creating the odoo server to run the tests." >>$TRACE
+	trace "Creating the odoo server to run the tests."
 	docker create -v $(pwd):/mnt/extra-addons --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --stop-after-init --test-tags "/$MODULE" >>$TRACE 2>&1
 else
-	echo "Docker $DOCKER_ODOO_FULL_NAME still exists, re-using it." >>$TRACE 2>&1
+	trace "Docker $DOCKER_ODOO_FULL_NAME still exists, re-using it."
 fi
 
 # Make sure database is started.
-echo "Starting the postgres server." >>$TRACE
+trace "Starting the postgres server."
 docker start $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 
 if [ "$ONCE" -eq 0 ]; then
@@ -352,14 +369,14 @@ if [ "$ONCE" -eq 0 ]; then
 
 	while true; do
 		hash=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
-		echo "Calculated hash for the folder where we are running AT START OF CYCLE: $hash" >>$TRACE
+		trace "Calculated hash for the folder where we are running AT START OF CYCLE: $hash"
 
 		run_tests
 
 		hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
-		echo "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2" >>$TRACE
+		trace "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2"
 		if [ "$hash" = "$hash2" ]; then
-			echo "Waiting for changes on the filesystem." >>$TRACE
+			trace "Waiting for changes on the filesystem."
 			inotifywait -r -q "$MODULE" >>$TRACE 2>&1
 		fi
 	done
