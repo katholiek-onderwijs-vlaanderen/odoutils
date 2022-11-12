@@ -8,7 +8,7 @@ MUST
 SHOULD
 * Add parameter to allow specifying the version of postgres to use. (must delete + create dockers if necessary) (will require refactoring options handling)
 * Add parameter to allow specifying the version of odoo to use. (must delete + create dockers if necessary) (will require refactoring options handling)
-* Rename repository to odoutils.sh, and test script to odounit.sh
+* Rename repository to odoutils.sh,
 * Add odorun.sh for running one or more modules from docker.
 
 COULD
@@ -18,6 +18,7 @@ WILL NOT
 
 DONE:
 
+* ~~Rename test script to odounit.sh~~ 
 * ~~--remove should use prefix on container / network name to select, making --remove more robust.~~
 * ~~Add prefix to all container names + network name~~
 * ~~extract logging into a function~~ 

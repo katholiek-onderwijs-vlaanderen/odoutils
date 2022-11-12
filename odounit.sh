@@ -1,14 +1,11 @@
 #!/bin/bash
 
-# Default values for variables
-# Can be overridden via .run-odoo-tests/config, or using command line parameters (TO DO: add support).
-
 # Temp file where the detected FAILs are stored.
-ERRORS=/tmp/run-tests-errors.txt
+ERRORS=/tmp/odounit-odoo-errors.log
 # Temp file where the output of the docker running the test suite is stored.
-LOG=/tmp/run-tests-logs.txt
+LOG=/tmp/odounit-odoo-container.log
 # Temp file where debug tracing is written. Tail it to debug the script.
-TRACE=/tmp/run-tests-trace.txt
+TRACE=/tmp/odounit-trace.log
 
 # Base names for dockers.
 # The actual name incorporates a hash that is dependent on module to test, odoo version and database version.
@@ -83,7 +80,7 @@ function help_message {
 	echo "                   The exit code is 0, also when nothing needed to be / was deleted."
 	echo
 	echo "    --tail         Tails the output of the test run."
-	echo "                   You should start <run-test.sh module_name> first, and issue run-test.sh --tail to view logs."
+	echo "                   You should start <$0 module_name> first, and issue $0 --tail to view logs."
 	echo
 	echo "Exit codes: (mostly useful in combination with --once)"
 	echo
@@ -125,14 +122,8 @@ function delete_containers {
 	trace "Truncating errors, log and trace files."
 	truncate $ERRORS >>$TRACE 2>&1
 	truncate $LOG >>$TRACE 2>&1
-	truncate $TRACE >>$TRACE 2>&1
-
-	# Clean up temporary files
-	trace "Removing errors and log files."
-	rm $ERRORS >>$TRACE 2>&1
-	rm $LOG >>$TRACE 2>&1
-	trace "Removing trace files. BYE BYE! :)"
-	rm $TRACE >/dev/null 2>&1
+	trace "trunciating trace files. BYE BYE! :)"
+	truncate $TRACE >/dev/null 2>&1
 }
 
 function run_tests {
@@ -180,7 +171,7 @@ function run_tests {
 		else
 			echo "Traces of the first failures:"
 		fi
-		cat /tmp/run-tests-logs.txt | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
+		cat "$LOG" | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
 	elif [ $(cat $LOG | grep '.* ERROR odoo .*' | wc -l) -ne 0 ]; then
 		LAST_RUN_FAILED=2
 
@@ -205,7 +196,7 @@ function run_tests {
 			echo "Tail of logs:"
 		fi
 
-		tail -n $lines $LOG | cut -c -$(tput cols)
+		tail -n $lines "$LOG" | cut -c -$(tput cols)
 	else
 		LAST_RUN_FAILED=0
 		if [ "$PLAIN" -eq 0 ]; then
@@ -226,7 +217,7 @@ function run_tests {
 		else
 			echo "Tail of logs:"
 		fi
-		tail -n $lines $LOG | cut -c -$(tput cols)
+		tail -n $lines "$LOG" | cut -c -$(tput cols)
 	fi
 }
 

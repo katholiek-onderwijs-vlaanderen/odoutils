@@ -1,18 +1,16 @@
 #!/bin/bash
 
-#../run-tests.sh --plain --once module_without_failures >/tmp/run-test.log
-#if [ "$?" -ne 0 ]; then
-#    echo "FAILED: should have returned exit code 0, indicating all tests passed."
-#    exit 1
-#fi
-#exit 0
+# Command to invoke odounit.sh
+CMD=../odounit.sh
 
-TRACE=/tmp/test-run-tests.log
-CMD=../run-tests.sh
-LOG=/tmp/test-run-tests-output.log
+# For debugging tracing is logged here
+TRACE=/tmp/odounit-test-trace.log
+
+# Output of odounit.sh is logged here
+CMD_LOG=/tmp/odounit-test.log
 
 function setUpOnce() {
-    truncate "$LOG"
+    truncate "$CMD_LOG"
     truncate "$TRACE"
 }
 
@@ -22,24 +20,24 @@ function trace() {
 
 function testSuccess() {
     assertEquals "Testing module_wihout_failures should return with exit code 0" \
-        $($CMD --plain --once module_without_failures >/tmp/run-test.log; echo $?) 0
+        $($CMD --plain --once module_without_failures >$CMD_LOG; echo $?) 0
 }
 
 function testFailure() {
     assertEquals "Testing module_wih_failures should return with exit code 1" \
-        $($CMD --plain --once module_with_failures >/tmp/run-test.log; echo $?) 1
+        $($CMD --plain --once module_with_failures >$CMD_LOG; echo $?) 1
 }
 
 function testUnknown() {
     assertEquals "Testing module_does_not_run_tests should return with exit code 2" \
-        $($CMD --plain --once module_does_not_run_tests >/tmp/run-test.log; echo $?) 2
+        $($CMD --plain --once module_does_not_run_tests >$CMD_LOG; echo $?) 2
 }
 
 function testRunWithoutOptionPlainOutputsColor() {
-    "$CMD" --once module_without_failures >"$LOG" 2>&1
-    cat "$LOG" | sed 's/\x1b\[[0-9;]*[mGKHF]//g' >"$LOG.stripped" 2>&1
-    hash_original=$(cat "$LOG" | md5sum)
-    hash_filtered=$(cat "$LOG.stripped" | md5sum)
+    "$CMD" --once module_without_failures >"$CMD_LOG" 2>&1
+    cat "$CMD_LOG" | sed 's/\x1b\[[0-9;]*[mGKHF]//g' >"$CMD_LOG.stripped" 2>&1
+    hash_original=$(cat "$CMD_LOG" | md5sum)
+    hash_filtered=$(cat "$CMD_LOG.stripped" | md5sum)
     trace "Hash of output: $hash_original"
     trace "Hash of filtered output: $hash_filtered"
 
@@ -47,10 +45,10 @@ function testRunWithoutOptionPlainOutputsColor() {
 }
 
 function testRunWithOptionPlainOutputsNoColor() {
-    "$CMD" --once --plain module_without_failures >"$LOG" 2>&1
-    cat "$LOG" | sed 's/\x1b\[[0-9;]*[mGKHF]//g' >"$LOG.stripped" 2>&1
-    hash_original=$(cat "$LOG" | md5sum)
-    hash_filtered=$(cat "$LOG.stripped" | md5sum)
+    "$CMD" --once --plain module_without_failures >"$CMD_LOG" 2>&1
+    cat "$CMD_LOG" | sed 's/\x1b\[[0-9;]*[mGKHF]//g' >"$CMD_LOG.stripped" 2>&1
+    hash_original=$(cat "$CMD_LOG" | md5sum)
+    hash_filtered=$(cat "$CMD_LOG.stripped" | md5sum)
     trace "Hash of output: $hash_original"
     trace "Hash of filtered output: $hash_filtered"
 
@@ -58,17 +56,17 @@ function testRunWithOptionPlainOutputsNoColor() {
 }
 
 function testRunWithOptionHelpOutputsHelp() {
-    "$CMD" --help >"$LOG" 2>&1
+    "$CMD" --help >"$CMD_LOG" 2>&1
 
-    assertNotEquals "Running with --help should output Usage help." $(cat $LOG | grep "Usage" | wc -l) 0
-    assertNotEquals "Running with --help should output Options help." $(cat $LOG | grep "Options" | wc -l) 0
-    assertNotEquals "Running with --help should output Examples help." $(cat $LOG | grep "Examples" | wc -l) 0
+    assertNotEquals "Running with --help should output Usage help." $(cat $CMD_LOG | grep "Usage" | wc -l) 0
+    assertNotEquals "Running with --help should output Options help." $(cat $CMD_LOG | grep "Options" | wc -l) 0
+    assertNotEquals "Running with --help should output Examples help." $(cat $CMD_LOG | grep "Examples" | wc -l) 0
 }
 
 function testNoOptionsShowsUsage() {
-    "$CMD" >"$LOG" 2>&1
+    "$CMD" >"$CMD_LOG" 2>&1
 
-    assertNotEquals "Running without any parameters should output Usage." $(cat $LOG | grep "Usage" | wc -l) 0
+    assertNotEquals "Running without any parameters should output Usage." $(cat $CMD_LOG | grep "Usage" | wc -l) 0
 }
 
 . shunit2
