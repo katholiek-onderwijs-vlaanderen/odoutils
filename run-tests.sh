@@ -37,19 +37,6 @@ function trace() {
 	echo "$1" >>"$TRACE" 2>&1
 }
 
-function remove_temp_files {
-	truncate $ERRORS
-	truncate $LOG
-	truncate $TRACE
-
-	# Clean up temporary files
-	rm $ERRORS >>$TRACE 2>&1
-	rm $LOG >>$TRACE 2>&1
-	if [ -f $TRACE ]; then
-		rm $TRACE >/dev/null 2>&1
-	fi
-}
-
 function ctrl_c_once() {
 	trace "Stopping odoo server"
 	docker stop $DOCKER_ODOO >>$TRACE 2>&1
@@ -134,6 +121,18 @@ function delete_containers {
 	else
 		trace "No bridge networks found to delete."
 	fi
+
+	trace "Truncating errors, log and trace files."
+	truncate $ERRORS >>$TRACE 2>&1
+	truncate $LOG >>$TRACE 2>&1
+	truncate $TRACE >>$TRACE 2>&1
+
+	# Clean up temporary files
+	trace "Removing errors and log files."
+	rm $ERRORS >>$TRACE 2>&1
+	rm $LOG >>$TRACE 2>&1
+	trace "Removing trace files. BYE BYE! :)"
+	rm $TRACE >/dev/null 2>&1
 }
 
 function run_tests {

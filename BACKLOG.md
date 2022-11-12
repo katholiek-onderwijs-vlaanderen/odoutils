@@ -6,13 +6,15 @@ MUST
 * Update README.md
 
 SHOULD
-* Add parameter to allow specifying the version of postgres to use. (must delete + create dockers if necessary)
-* Add parameter to allow specifying the version of odoo to use. (must delete + create dockers if necessary)
+* Add parameter to allow specifying the version of postgres to use. (must delete + create dockers if necessary) (will require refactoring options handling)
+* Add parameter to allow specifying the version of odoo to use. (must delete + create dockers if necessary) (will require refactoring options handling)
+* Rename repository to odoutils.sh, and test script to odounit.sh
+* Add odorun.sh for running one or more modules from docker.
 
 COULD
-* Determine default postgres version automatically.
 
-WOULD
+WILL NOT
+* Determine default postgres version automatically.
 
 DONE:
 
