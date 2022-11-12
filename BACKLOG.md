@@ -8,6 +8,8 @@ MUST
 * Update README.md
 
 SHOULD
+* Add prefix to all container names + network name
+* --remove should use prefix on container / network name to select, making --remove more robust.
 * Add parameter to allow specifying the version of postgres to use. (must delete + create dockers if necessary)
 * Add parameter to allow specifying the version of odoo to use. (must delete + create dockers if necessary)
 

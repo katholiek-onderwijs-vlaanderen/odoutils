@@ -63,13 +63,13 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: ./run-tests.sh [--configure | --help | --tail] [odoo_module_name]"
+	echo "Usage: $0 [--configure | --help | --tail] [odoo_module_name]"
 }
 
 function help_message {
 	echo "Specify the odoo module folder to run the test suite:"
 	echo
-	echo "$ ./run-tests.sh my_module"
+	echo "$ $0 my_module"
 	echo
 	echo "Options:"
 	echo
@@ -88,7 +88,16 @@ function help_message {
 	echo
 	echo "    0  All tests were run, and none of them failed."
 	echo "    1  All tests were run, and at least one of them failed."
-	echo "    2  A different (unkown) error occured during the execution of the script / running of the tests."
+	echo "    2  A different (unkown) error occured during running of the tests. (Module install failed / ...)"
+	echo
+	echo "Examples:"
+	echo
+	echo "Run the test suite of module 'my_module' in a loop and show full color output:"
+	echo "$ $0 my_module"
+	echo
+	echo "Run the test suite for module 'my_module' once and output in plain text:"
+	echo "$ $0 --plain --once my_module"
+	echo
 }
 
 function delete_containers {
@@ -161,7 +170,7 @@ function run_tests {
 
 		echo "Showing tail of odoo log on screen." >>$TRACE
 
-		if ["$PLAIN" -eq 0]; then
+		if [ "$PLAIN" -eq 0 ]; then
 			echo "$(tput smso)Tail of logs:$(tput rmso)"
 		else
 			echo "Tail of logs:"
@@ -238,12 +247,12 @@ if [ $# -eq 1 ]; then
 		if [ -s $LOG ]; then
 			tail -f $LOG
 		else
-			echo "Please start ./run-tests.sh [module_name] first in a different console, then issue this command to tail the logs."
+			echo "Please start $0 [module_name] first in a different console, then issue this command to tail the logs."
 		fi
 		exit 0
 	elif [ "$1" = "--remove" ]; then
 		echo "Removing postgres and odoo containers used for running tests."
-		echo "They will be created automatically again when you run ./run-tests.sh."
+		echo "They will be created automatically again when you run $0."
 		delete_containers
 		echo "Done."
 		exit 0
