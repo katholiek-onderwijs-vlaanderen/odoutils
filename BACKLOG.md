@@ -6,19 +6,19 @@ MUST
 * Update README.md
 
 SHOULD
-* Add prefix to all container names + network name
-* --remove should use prefix on container / network name to select, making --remove more robust.
 * Add parameter to allow specifying the version of postgres to use. (must delete + create dockers if necessary)
 * Add parameter to allow specifying the version of odoo to use. (must delete + create dockers if necessary)
 
 COULD
 * Determine default postgres version automatically.
-* extract logging into a function
 
 WOULD
 
 DONE:
 
+* ~~--remove should use prefix on container / network name to select, making --remove more robust.~~
+* ~~Add prefix to all container names + network name~~
+* ~~extract logging into a function~~ 
 * ~~Cover functionality with test suite.~~ 
 * ~~Speed up unit testing.~~
 * ~~Make the script testable.~~
