@@ -12,6 +12,9 @@ you make in the test suite or the implementation of your module.
 It can be used interactively (default), in which case it will continuously monitor your sources and
 (re)run the test suite when a change is detected. A clear visual message is given when tests pass or fail.
 
+![Success](/docs/odounit-sh-success.png)
+![Failed](/docs/odounit-sh-failed.png)
+
 Alternatively you can use it to run a test suite once, and check to exit code for scripting purposes in a CI/CD setup.
 
 It uses docker containers to isolate the entire process of running the tests from the rest of your system.
@@ -20,7 +23,7 @@ It uses docker containers to isolate the entire process of running the tests fro
 
 | Option       | Description |
 | ------------ | ----------- |
-| `--help`     | Displays this help message. |
+| `--help`     | Displays help message. |
 | `--once`     | Run test suite once. Do not enter loop to re-run test suite on file change. |
 | `--plain`    | Do not output in color. Do not clear screen. |
 | `--remove`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the tests next time.<br/> The exit code is 0, also when nothing needed to be / was deleted. |
