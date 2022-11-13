@@ -57,3 +57,10 @@ Open a second terminal session, while ./odounit.sh is running, and inspect the t
 Delete all containers and log files (by default containers are created and then reused for speed):
 
 `$ ./odounit.sh --remove`
+
+# Contributing
+
+A *high-level overview* of the technical design is [described here](/docs/TECH_OVERVIEW.md).
+Bug reporting can be done through the issues section.
+Features can be suggested in the discussions section.
+Please also use the discussions section for all other communication.
