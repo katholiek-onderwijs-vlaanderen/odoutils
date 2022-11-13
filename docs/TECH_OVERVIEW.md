@@ -45,7 +45,7 @@ When a file is modified, it's timestamp will be updated, resulting in a differen
 When a file is removed or added, the hash will also change, as find will now have more or fewer lines.
 2) We then run the tests and parse the output of the odoo docker.
 3) After the tests were run we calculate a new hash for the folder of the module the user is testing.
-4) If there is a difference in both hash values, we run the tests again.<br/> Otherwise we wait for *any* event on any of the files in the module using `inotifywait -r -q "$MODULE"`, and then go to step 1.
+4) If there is a difference in both hash values, we run the tests again.<br/> Otherwise we wait for *any* event on any of the files in the module using `inotifywait -r -q "$MODULE"`, and then re-run the tests.
 
 ## Variables
 
