@@ -13,6 +13,10 @@ More specifically 3 items are created (in this order of dependency):
 * A postgres container.
 * An odoo container.
 
+The necessary command line arguments for odoo-bin are passed in at creation time of the containers. More specifically: `-i` and `-u` to install and upgrade the module, as well as `--stop-after-init` and `--test-tags "/$MODULE"`. This makes odoo-bin install/upgrade the module, run all tests *only* for that module, and then exit. The odoo container is stopped at that time (but not removed, it is re-used next time the tests are run).
+
+For more information on the command line options of odoo-bin see the [official odoo documentation](https://www.odoo.com/documentation/master/developer/cli.html).
+
 ## Scope for a network+containers set.
 
 Since the command to run odoo has to *include* (at creation time) the name of the module to run tests for (among other things) and docker containers are *immutable*, we create a new pg+odoo+network combination for any combination of:
