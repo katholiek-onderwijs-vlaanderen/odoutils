@@ -17,6 +17,8 @@ The necessary command line arguments for odoo-bin are passed in at creation time
 
 For more information on the command line options of odoo-bin see the [official odoo documentation](https://www.odoo.com/documentation/master/developer/cli.html).
 
+The *current folder* where you run `odounit.sh` is mapped as `/mnt/extra-addons` in the container.
+
 ## Scope for a network+containers set.
 
 Since the command to run odoo has to *include* (at creation time) the name of the module to run tests for (among other things) and docker containers are *immutable*, we create a new pg+odoo+network combination for any combination of:
