@@ -28,9 +28,6 @@ DOCKER_ODOO_IMAGE_NAME=odoo:15
 # Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
 DOCKER_PG_IMAGE_NAME=postgres:10
 
-# If the container should be run in development mode this flag will be set to 1.
-DEV_MODE=0
-
 # On what port on the host machine will the http port be mapped? Default: 8069. 
 # Can be overridden using the -p flag.
 PORT=8069
@@ -67,8 +64,6 @@ function help_message {
 	echo "read / reloaded. No need for manually restarting the server."
 	echo
 	echo "Options:"
-	echo
-	echo "    -d    Start in development mode. This will append --dev xml,reload to the odoo-bin command."
 	echo
 	echo "    -g    Selects the odoo version to run. Tested with: 14,15 and 16."
 	echo
@@ -158,14 +153,9 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "dg:hp:rv" opt; do
+while getopts "g:hp:rv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
-	d)
-		trace "Swithing on DEVELOPMENT mode."
-		DEV_MODE=1
-		;;
-
 	g)
 		trace "-g detected."
 		VERSION=$OPTARG
@@ -246,7 +236,7 @@ trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
 trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
-DOCKER_HASH=$(echo "$PORT" "$DEV_MODE" "$MODULE" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
+DOCKER_HASH=$(echo "$PORT" "$MODULE" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
 
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
 DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
@@ -278,11 +268,7 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-	DEV_OPTS=""
-	if [ $DEV_MODE -eq 1 ]; then
-		DEV_OPTS="--dev xml,reload"
-	fi
-	docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --no-database-list $DEV_OPTS >>$TRACE 2>&1
+	docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --no-database-list --dev xml,reload >>$TRACE 2>&1
 else
 	trace "Docker $DOCKER_ODOO_FULL_NAME still exists, re-using it."
 fi

@@ -1,7 +1,14 @@
 # odoutils.sh
 
 Set of command line utilities for odoo development.
-Currently a single command is implemented that allows you to run the test suite for a module: `odounit.sh`
+Currently two commands are implemented.
+
+`odounit.sh` allows you to run the test suite for a module (in docker containers). It is designed to allow you to focus fully on test development
+and implementation, rather than on restarting/upgrading servers, scanning logs for FAIL messages etc.
+If provides a clear RED or GREEN display to allow you to very quickly know the status of your code.
+
+`odorun.sh` is a script that runs odoo (using docker), and re-loads the server at the right times. It is designed to allow you to focus fully on doing 
+development, rather than on restarting the server, upgrading modules, etc.. *Under development*
 
 ## odounit.sh
 
@@ -61,9 +68,13 @@ Delete all containers and log files (by default containers are created and then 
 
 `$ ./odounit.sh -r`
 
+## 
+
 # Contributing
 
-A *high-level overview* of the technical design is [described here](/docs/TECH_OVERVIEW.md).
+A *high-level overview* of the technical design for `odounit.sh` is [described here](/docs/TECH_OVERVIEW_ODOUNIT.md).
+For `odorun.sh` the high-level technical documentation is [located here](/docs/TECH_OVERVIEW_ODORUN.md).
 Bug reporting can be done through the issues section.
 Features can be suggested in the discussions section.
 Please also use the discussions section for all other communication.
+

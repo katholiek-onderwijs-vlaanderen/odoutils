@@ -1,6 +1,6 @@
 # Technical overview
 
-This document gives a high-level overview of the design of the script. If you want to contribute, this page should give you a head start.
+This document gives a high-level overview of the design of `odounit.sh`. If you want to contribute, this page should give you a head start.
 Feedback on the technical documentation is welcome via the discussions section. 
 
 ## Network+Containers
@@ -53,8 +53,8 @@ The [source of the module](/odounit.sh) starts by documenting all variables used
 
 ## Tracing & Debugging
 
-The code of the module logs a verbose trace in `/tmp/odounit-trace.log`. Tail it for debugging. Uncommenting `set +x` at the start of the module source can also help during debugging.
+The code of the module logs a verbose trace in `/tmp/odounit-trace.log`. Tail it for debugging.
 
 ## Unit tests
 
-A suite of test scripts is located in `tests` and can be run using `test.sh`. The test suite uses [shunit2](https://github.com/kward/shunit2./com) as xUnit testing framework.
+A suite of test scripts is located in `tests` and can be run using `test-odounit.sh`. The test suite uses [shunit2](https://github.com/kward/shunit2./com) as xUnit testing framework.
