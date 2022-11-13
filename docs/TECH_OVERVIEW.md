@@ -17,20 +17,22 @@ The necessary command line arguments for odoo-bin are passed in at creation time
 
 For more information on the command line options of odoo-bin see the [official odoo documentation](https://www.odoo.com/documentation/master/developer/cli.html).
 
-The *current folder* where you run `odounit.sh` is mapped as `/mnt/extra-addons` in the container.
+The *current folder* where you run `odounit.sh` is mapped as `/mnt/extra-addons` in the odoo container.
 
 ## Scope for a network+containers set.
 
-Since the command to run odoo has to *include* (at creation time) the name of the module to run tests for (among other things) and docker containers are *immutable*, we create a new pg+odoo+network combination for any combination of:
+Since the command to run odoo has to *include* (at creation time) the name of the module to run tests for (among other things) and docker containers are *immutable*, we create a new network and pg+odoo conatiners for any combination of values for these 3 parameters:
 
 * module name
 * odoo version
 * postgres version
 
-An md5hash is generated for each combination of those 3 input parameters, and is appended to the name of the docker containers and to the bridge network used:
+An md5hash is generated for each combination of those 3 input parameters, and is appended to the name of the docker containers and to the name of bridge network used:
 
+`...`<br/>
 `DOCKER_HASH=$(echo "$MODULE" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)`<br/>
-`DOCKER_ODOO_FULL_NAME="$DOCKER_ODOO-$DOCKER_HASH"`
+`DOCKER_ODOO_FULL_NAME="$DOCKER_ODOO-$DOCKER_HASH"`<br/>
+`...`
 
 ## Detecting file changes
 
