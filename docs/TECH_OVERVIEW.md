@@ -54,3 +54,7 @@ The [source of the module](/odounit.sh) starts by documenting all variables used
 ## Tracing & Debugging
 
 The code of the module logs a verbose trace in `/tmp/odounit-trace.log`. Tail it for debugging. Uncommenting `set +x` at the start of the module source can also help during debugging.
+
+## Unit tests
+
+A suite of test scripts is located in `tests` and can be run using `test.sh`. The test suite uses [shunit2](https://github.com/kward/shunit2) as xUnit testing framework.

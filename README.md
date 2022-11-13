@@ -5,7 +5,7 @@ Currently a single command is implemented that allows you to run the test suite 
 
 ## odounit.sh
 
-`Usage: ./odounit.sh [--help | --tail | --remove] [--plain] [--once] [odoo_module_name]`
+`Usage: ./odounit.sh [-h | -t | -r] [-p] [-o] [odoo_module_name]`
 
 `./odounit.sh` is a test suite runner for odoo modules. It is designed to allow you get quick feedback on changes
 you make in the test suite or the implementation of your module.
@@ -21,17 +21,17 @@ It uses docker containers to isolate the entire process of running the tests fro
 
 ### Options:
 
-| Option       | Description |
-| ------------ | ----------- |
-| `--help`     | Displays help message. |
-| `--once`     | Run test suite once. Do not enter loop to re-run test suite on file change. |
-| `--plain`    | Do not output in color. Do not clear screen. |
-| `--remove`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the tests next time.<br/> The exit code is 0, also when nothing was deleted. |
-| `--tail`     | Tails the output of the test run.<br/> You should start `./odounit.sh module_name` first, and issue `./odounit.sh --tail` to view logs in a separate terminal session. |
+| Option | Description |
+| ------ | ----------- |
+| `-h`   | Displays help message. |
+| `-o`   | Run test suite once. Do not enter loop to re-run test suite on file change. |
+| `-p`   | Do not output in color. Do not clear screen. |
+| `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the tests next time.<br/> The exit code is 0, also when nothing was deleted. |
+| `-t`   | Tails the output of the test run.<br/> You should start `./odounit.sh module_name` first, and issue `./odounit.sh -t` to view logs in a separate terminal session. |
 
 ### Exit codes:
 
-Mostly useful in combination with --once --plain, for scripting purposes.
+Mostly useful in combination with -o -p, for scripting purposes.
 
 | Code | Description |
 | ---- | ----------- |
@@ -47,16 +47,16 @@ Run the test suite of module 'my_module' in a loop and show full color output:
 
 Run the test suite for module 'my_module' once and output in plain text, then check if failures were detected:
 
-`$ ./odounit.sh --plain --once my_module`<br>
+`$ ./odounit.sh -p -o my_module`<br>
 `$ [ $? -eq 1 ] && echo "At least one test failed."`
 
 Open a second terminal session, while ./odounit.sh is running, and inspect the tail of the odoo log:
 
-`$ ./odounit.sh --tail`
+`$ ./odounit.sh -t`
 
 Delete all containers and log files (by default containers are created and then reused for speed):
 
-`$ ./odounit.sh --remove`
+`$ ./odounit.sh -r`
 
 # Contributing
 

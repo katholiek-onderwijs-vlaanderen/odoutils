@@ -7,6 +7,9 @@
 set -euo pipefail
 #set -x
 
+# Version of the script
+SCRIPT_VERSION=0.9
+
 # Temp file where the output of the docker running the test suite is stored.
 LOG=/tmp/odounit-odoo-container.log
 # Temp file where debug tracing is written. Tail it to debug the script.
@@ -56,16 +59,27 @@ function ctrl_c() {
 }
 
 function please_install {
-	echo "This script requires the <$1> command. Please install it."
+	echo "This script requires these command to run:"
+	echo
+	echo " - figlet"
+	echo " - tput (from package ncruses-bin)"
+	echo " - docker (from docker.io)"
+	echo " - inotifywait (from inotify-tools)."
+	echo
+	echo "Please install them."
 	echo
 	echo "On Ubuntu for example:"
 	echo
-	echo "$ sudo apt-get install $2"
+	echo "$ sudo apt-get install figlet ncurses-bin docker.io inotify-tools"
+	echo
+	echo "In the above docker.io is the default docker package that is bundled with ubuntu."
+	echo "If you want a more recent version please follow the instructions on the docker website."
+	echo
 	exit 1
 }
 
 function usage_message {
-	echo "Usage: $0 [--help | --tail | --remove] [--plain] [--once] [odoo_module_name]"
+	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [odoo_module_name]"
 }
 
 function help_message {
@@ -80,18 +94,18 @@ function help_message {
 	echo
 	echo "Options:"
 	echo
-	echo "    --help         Displays this help message."
+	echo "    -h    Displays this help message."
 	echo
-	echo "    --once         Run test suite once. Do not enter loop to re-run test suite on file change."
+	echo "    -o    Run test suite once. Do not enter loop to re-run test suite on file change."
 	echo
-	echo "    --plain        Do not output in color. Do not clear screen."
+	echo "    -p    Do not output in color. Do not clear screen."
 	echo
-	echo "    --remove       Delete the database and odoo container, as well as the bridge network between them."
-	echo "                   The containers and network will be re-created when you run the tests next time."
-	echo "                   The exit code is 0, also when nothing was deleted."
+	echo "    -r    Delete the database and odoo container, as well as the bridge network between them."
+	echo "          The containers and network will be re-created when you run the tests next time."
+	echo "          The exit code is 0, also when nothing was deleted."
 	echo
-	echo "    --tail         Tails the output of the test run."
-	echo "                   You should start <$0 module_name> first, and issue $0 --tail to view logs in a separate terminal session."
+	echo "    -t    Tails the output of the test run."
+	echo "          You should start <$0 module_name> first, and issue $0 -t to view logs in a separate terminal session."
 	echo
 	echo "Exit codes: (mostly useful in combination with --once --plain, for scripting purposes)"
 	echo
@@ -105,13 +119,13 @@ function help_message {
 	echo "$ $0 my_module"
 	echo
 	echo "Run the test suite for module 'my_module' once and output in plain text:"
-	echo "$ $0 --plain --once my_module"
+	echo "$ $0 -p -o my_module"
 	echo
 	echo "Open a second terminal session, while $0 is running, and inspect the tail of the odoo log:"
-	echo "$ $0 --tail"
+	echo "$ $0 -t"
 	echo
 	echo "Delete all containers and log files (by default containers are created and then reused for speed):"
-	echo "$ $0 --remove"
+	echo "$ $0 -r"
 }
 
 function delete_containers {
@@ -237,12 +251,17 @@ function run_tests {
 trace "*** Script starting..."
 
 # Check if all dependencies are installed..
+trace "Verifying that figlet is installed."
 command -v figlet >>$TRACE 2>&1 || please_install figlet figlet
+trace "Verifying that docker is installed."
 command -v docker >>$TRACE 2>&1 || please_install docker docker.io
-command -v tput >>$TRACE 2>&1 || please_install tput tput
+trace "Verifying that tput is installed."
+command -v tput >>$TRACE 2>&1 || please_install tput ncurses-bin
+trace "Verifying that inotifywait is installed."
 command -v inotifywait >>$TRACE 2>&1 || please_install inotifywait inotify-tools
 
 # If we are running on WSL, check that the docker command
+trace "Verifying that docker command is available."
 # is telling us to start the docker engine via the UI...
 if [ $(docker 2>&1 | grep "could not be found" | wc -l) -ne 0 ]; then
 	docker
@@ -251,78 +270,159 @@ if [ $(docker 2>&1 | grep "could not be found" | wc -l) -ne 0 ]; then
 	echo "*** Please make sure the docker engine is started using docker desktop. ***"
 	echo "***************************************************************************"
 	echo
-	exit 1
+	exit 2
 fi
 
-# Process the command line arguments.
-if [ $# -eq 1 ]; then
-	if [ "$1" = "--help" ]; then
-		trace "--help detected -> Showing help message."
+if [ $(docker ps 2>&1 | grep "Cannot connect to" | wc -l) -ne 0 ]; then
+	echo
+	echo "***************************************************************************"
+	echo "*** Please make sure the docker engine is started using docker desktop. ***"
+	echo "***************************************************************************"
+	echo
+	exit 2
+fi
+
+trace "Starting parse of command line."
+
+while getopts "hpotvr" opt; do
+	trace "Parsing option [$opt] now:"
+	case $opt in
+	h)
+		trace "-h detected -> Showing help message."
 		usage_message
 		echo
 		help_message
 		echo
-		exit 1
-	elif [ "$1" = "--tail" ]; then
+		exit 0
+		;;
+	p)
+		trace "-p detected. Setting PLAIN=1."
+		PLAIN=1
+		;;
+
+	o)
+		trace "-o detected."
+		ONCE=1
+		;;
+
+	t)
 		if [ -s $LOG ]; then
-			trace "--tail detected. Starting tail -f on odoo container log."
+			trace "-t detected. Starting tail -f on odoo container log."
 			tail -f $LOG
 		else
-			trace "--tail detected, but no log file found. Showing tip to user."
+			trace "-t detected, but no log file found. Showing tip to user."
 			echo "Please start $0 [module_name] first in a different console, then issue this command to tail the logs."
 		fi
-		exit 0
-	elif [ "$1" = "--remove" ]; then
-		trace "--remove detected. deleting conatiner + networks."
+		;;
+
+	r)
+		trace "-r detected. deleting conatiner + networks."
 		echo "Removing postgres and odoo containers used for running tests."
 		echo "They will be created automatically again when you run $0."
 		delete_containers
 		echo "Done."
 		exit 0
-	else
-		trace "Only command line parameter is the module name: $1"
-		MODULE=$1
-	fi
-elif [ $# -eq 2 ]; then
-	if [ "$1" = "--once" ]; then
-		trace "--once detected. Setting ONCE=1."
-		ONCE=1
-		MODULE=$2
-	elif [ "$1" == "--plain" ]; then
-		trace "--plain detected. Setting PLAIN=1."
-		PLAIN=1
-		MODULE=$2
-	else
-		trace "Illegal parameter combination. Showing usage message to user."
-		echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
-		usage_message
-		exit 1
-	fi
-elif [ $# -eq 3 ]; then
-	if [ "$1" = "--once" ] && [ "$2" = "--plain" ]; then
-		trace "--once --plain detected. Setting ONCE=1 and PLAIN=1."
-		ONCE=1
-		PLAIN=1
-		MODULE=$3
-		trace "Module to run test suite for: $MODULE"
-	elif [ "$1" = "--plain" ] && [ "$2" = "--once" ]; then
-		trace "--plain --once detected. Setting ONCE=1 and PLAIN=1."
-		ONCE=1
-		PLAIN=1
-		MODULE=$3
-		trace "Module to run test suite for: $MODULE"
-	else
-		trace "Illegal parameter combination. Showing usage message to user."
-		echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
-		usage_message
-		exit 1
-	fi
-else
-	trace "Illegal parameter combination. Showing usage message to user."
-	echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
+		;;
+
+	v)
+		echo "Script version: $SCRIPT_VERSION"
+		exit 0
+		;;
+	esac
+done
+
+trace "Shifting arguments to find module name."
+trace "Command line = [$@]."
+shift $(($OPTIND - 1))
+
+# Check that the user specified a module to test.
+if [ -z ${1+x} ]; then
+	echo "No module to test was specified."
+	echo
 	usage_message
-	exit 1
+	exit 2
 fi
+
+MODULE=$1
+trace "Module to test: [$MODULE]."
+
+if [ ! -d "$MODULE" ]; then
+	echo "Module [$1] is not a folder in the current working directory [$(pwd)]."
+	echo
+	echo "Please specify a valid odoo module."
+	exit 2
+fi
+
+trace "Finished parsing of command line."
+## Process the command line arguments.
+#	if [ $# -eq 1 ]; then
+#		if [ "$1" = "--help" ]; then
+#			trace "--help detected -> Showing help message."
+#			usage_message
+#			echo
+#			help_message
+#			echo
+#			exit 1
+#		elif [ "$1" = "--tail" ]; then
+#			if [ -s $LOG ]; then
+#				trace "--tail detected. Starting tail -f on odoo container log."
+#				tail -f $LOG
+#			else
+#				trace "--tail detected, but no log file found. Showing tip to user."
+#				echo "Please start $0 [module_name] first in a different console, then issue this command to tail the logs."
+#			fi
+#			exit 0
+#		elif [ "$1" = "--remove" ]; then
+#			trace "--remove detected. deleting conatiner + networks."
+#			echo "Removing postgres and odoo containers used for running tests."
+#			echo "They will be created automatically again when you run $0."
+#			delete_containers
+#			echo "Done."
+#			exit 0
+#		else
+#			trace "Only command line parameter is the module name: $1"
+#			MODULE=$1
+#		fi
+#	elif [ $# -eq 2 ]; then
+#		if [ "$1" = "--once" ]; then
+#			trace "--once detected. Setting ONCE=1."
+#			ONCE=1
+#			MODULE=$2
+#		elif [ "$1" == "--plain" ]; then
+#			trace "--plain detected. Setting PLAIN=1."
+#			PLAIN=1
+#			MODULE=$2
+#		else
+#			trace "Illegal parameter combination. Showing usage message to user."
+#			echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
+#			usage_message
+#			exit 1
+#		fi
+#	elif [ $# -eq 3 ]; then
+#		if [ "$1" = "--once" ] && [ "$2" = "--plain" ]; then
+#			trace "--once --plain detected. Setting ONCE=1 and PLAIN=1."
+#			ONCE=1
+#			PLAIN=1
+#			MODULE=$3
+#			trace "Module to run test suite for: $MODULE"
+#		elif [ "$1" = "--plain" ] && [ "$2" = "--once" ]; then
+#			trace "--plain --once detected. Setting ONCE=1 and PLAIN=1."
+#			ONCE=1
+#			PLAIN=1
+#			MODULE=$3
+#			trace "Module to run test suite for: $MODULE"
+#		else
+#			trace "Illegal parameter combination. Showing usage message to user."
+#			echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
+#			usage_message
+#			exit 1
+#		fi
+#	else
+#		trace "Illegal parameter combination. Showing usage message to user."
+#		echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
+#		usage_message
+#		exit 1
+#	fi
 
 # Log all variables for debugging purposes.
 trace "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME"
@@ -350,9 +450,8 @@ else
 	trace "User defined bridge network $DOCKER_NETWORK_FULL_NAME still exists, re-using it."
 fi
 
-trace "Checking if the postgres docker exists."
-found_docker_pg=$(docker ps -a | grep "$DOCKER_PG_FULL_NAME" | wc -l)
-if [ $found_docker_pg -eq 0 ]; then
+trace "Checking if the postgres docker [$DOCKER_PG_FULL_NAME] exists."
+if [ $(docker ps -a | grep "$DOCKER_PG_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating a postgres server."
 	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_FULL_NAME" --name "$DOCKER_PG_FULL_NAME" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
 else

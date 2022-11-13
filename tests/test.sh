@@ -19,54 +19,84 @@ function trace() {
 }
 
 function testSuccess() {
-    assertEquals "Testing module_wihout_failures should return with exit code 0" \
-        $($CMD --plain --once module_without_failures >$CMD_LOG; echo $?) 0
+    trace "Testing happy path. Executing test suite for module_wihout_failure."
+    "$CMD" -p -o module_without_failures >$CMD_LOG
+    RET=$?
+    trace "Return value was [$RET]."
+
+    trace "Checking return value was 0."
+    assertEquals "Testing module_without_failures should return with exit code 0" $RET 0
+    trace "testSuccess done."
 }
 
 function testFailure() {
-    assertEquals "Testing module_wih_failures should return with exit code 1" \
-        $($CMD --plain --once module_with_failures >$CMD_LOG; echo $?) 1
+    trace "Testing for correct detection of failures. Executing test suite for module_with_failure."
+    "$CMD" -p -o module_with_failures >$CMD_LOG
+    RET=$?
+    trace "Return value was [$RET]."
+
+    trace "Checking return value was 0."
+    assertEquals "Testing module_with_failures should return with exit code 1" $RET 1
+    trace "testFailure done."
 }
 
 function testUnknown() {
-    assertEquals "Testing module_does_not_run_tests should return with exit code 2" \
-        $($CMD --plain --once module_does_not_run_tests >$CMD_LOG; echo $?) 2
+    "$CMD" -p -o module_does_not_run_tests >$CMD_LOG
+    RET=$?
+
+    assertEquals "Testing module_does_not_run_tests should return with exit code 2" $RET 2
 }
 
 function testRunWithoutOptionPlainOutputsColor() {
-    "$CMD" --once module_without_failures >"$CMD_LOG" 2>&1
+    "$CMD" -o module_without_failures >"$CMD_LOG" 2>&1
     cat "$CMD_LOG" | sed 's/\x1b\[[0-9;]*[mGKHF]//g' >"$CMD_LOG.stripped" 2>&1
     hash_original=$(cat "$CMD_LOG" | md5sum)
     hash_filtered=$(cat "$CMD_LOG.stripped" | md5sum)
     trace "Hash of output: $hash_original"
     trace "Hash of filtered output: $hash_filtered"
 
-    assertNotEquals "Running tests without --plain should output color." "$hash_original" "$hash_filtered"
+    assertNotEquals "Running tests without -p should output color." "$hash_original" "$hash_filtered"
 }
 
 function testRunWithOptionPlainOutputsNoColor() {
-    "$CMD" --once --plain module_without_failures >"$CMD_LOG" 2>&1
+    "$CMD" -o -p module_without_failures >"$CMD_LOG" 2>&1
     cat "$CMD_LOG" | sed 's/\x1b\[[0-9;]*[mGKHF]//g' >"$CMD_LOG.stripped" 2>&1
     hash_original=$(cat "$CMD_LOG" | md5sum)
     hash_filtered=$(cat "$CMD_LOG.stripped" | md5sum)
     trace "Hash of output: $hash_original"
     trace "Hash of filtered output: $hash_filtered"
 
-    assertEquals "Running tests with --plain should NOT output color." "$hash_original" "$hash_filtered"
+    assertEquals "Running tests with -p should NOT output color." "$hash_original" "$hash_filtered"
 }
 
 function testRunWithOptionHelpOutputsHelp() {
-    "$CMD" --help >"$CMD_LOG" 2>&1
+    "$CMD" -h >"$CMD_LOG" 2>&1
 
-    assertNotEquals "Running with --help should output Usage help." $(cat $CMD_LOG | grep "Usage" | wc -l) 0
-    assertNotEquals "Running with --help should output Options help." $(cat $CMD_LOG | grep "Options" | wc -l) 0
-    assertNotEquals "Running with --help should output Examples help." $(cat $CMD_LOG | grep "Examples" | wc -l) 0
+    assertNotEquals "Running with -h should output Usage help." $(cat $CMD_LOG | grep "Usage" | wc -l) 0
+    assertNotEquals "Running with -h should output Options help." $(cat $CMD_LOG | grep "Options" | wc -l) 0
+    assertNotEquals "Running with -h should output Examples help." $(cat $CMD_LOG | grep "Examples" | wc -l) 0
 }
 
 function testNoOptionsShowsUsage() {
     "$CMD" >"$CMD_LOG" 2>&1
 
     assertNotEquals "Running without any parameters should output Usage." $(cat $CMD_LOG | grep "Usage" | wc -l) 0
+}
+
+function testRemoveContainers() {
+    trace "First checking if there are docker containers."
+    if [ $(docker ps -a | grep 'run-odoo-tests' | wc -l) -eq 0 ]; then
+        trace "Did not find any - creating them."
+        "$CMD" -o -p module_without_failures >"$CMD_LOG" 2>&1
+    else
+        trace "There are some."
+    fi
+
+    trace "Removing docker containers."
+    "$CMD" -r >"$CMD_LOG" 2>&1
+
+    trace "Checking that they were deleted."
+    assertTrue "All docker containers should be removed." "[ $(docker ps -a | grep 'run-odoo-tests' | wc -l) -eq 0 ]"
 }
 
 . shunit2

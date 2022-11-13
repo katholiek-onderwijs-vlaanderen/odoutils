@@ -8,7 +8,6 @@ SHOULD
 - [ ] Add parameter to allow specifying the version of postgres to use. (will require refactoring options handling)
 - [ ] Add parameter to allow specifying the version of odoo to use. (will require refactoring options handling)
 - [ ] Create odorun.sh for running one or more modules from docker.
-- [ ] Add message with command line syntax on how to install dependencies. (sudo apt-get install figlet ... docker.io)
 
 COULD
 
@@ -18,6 +17,8 @@ WILL NOT
 DONE:
 
 
+- [x] Add -v for script versioning.
+- [x] Add message with command line syntax on how to install dependencies. (sudo apt-get install figlet ... docker.io)
 - [x] Add technical docs.
 - [x] Update README.md to add user documentation.
 - [x] Added set -euo pipefail to make script more robust.
