@@ -5,18 +5,17 @@ MUST
 - [ ] Test fresh install on real ubuntu.
 
 SHOULD
-- [ ] Add parameter to allow specifying the version of postgres to use. (will require refactoring options handling)
-- [ ] Add parameter to allow specifying the version of odoo to use. (will require refactoring options handling)
 - [ ] Create odorun.sh for running one or more modules from docker.
 
 COULD
 
 WILL NOT
-- [ ] Determine default postgres version automatically per version of odoo.
 
 DONE:
 
 
+- [x] Determine default postgres version automatically per version of odoo.
+- [x] Add parameter to allow specifying the version of odoo to use. (will require refactoring options handling)
 - [x] Add -v for script versioning.
 - [x] Add message with command line syntax on how to install dependencies. (sudo apt-get install figlet ... docker.io)
 - [x] Add technical docs.
@@ -46,3 +45,4 @@ DONE:
 REJECTED
 
 - [ ] Make postgres port dynamic. 
+- [ ] Add parameter to allow specifying the version of postgres to use. (will require refactoring options handling)

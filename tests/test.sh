@@ -25,7 +25,7 @@ function testSuccess() {
     trace "Return value was [$RET]."
 
     trace "Checking return value was 0."
-    assertEquals "Testing module_without_failures should return with exit code 0" $RET 0
+    assertEquals "Testing module_without_failures should return with exit code 0" 0 $RET
     trace "testSuccess done."
 }
 
@@ -36,7 +36,7 @@ function testFailure() {
     trace "Return value was [$RET]."
 
     trace "Checking return value was 0."
-    assertEquals "Testing module_with_failures should return with exit code 1" $RET 1
+    assertEquals "Testing module_with_failures should return with exit code 1" 1 $RET
     trace "testFailure done."
 }
 
@@ -44,7 +44,7 @@ function testUnknown() {
     "$CMD" -p -o module_does_not_run_tests >$CMD_LOG
     RET=$?
 
-    assertEquals "Testing module_does_not_run_tests should return with exit code 2" $RET 2
+    assertEquals "Testing module_does_not_run_tests should return with exit code 2" 2 $RET
 }
 
 function testRunWithoutOptionPlainOutputsColor() {
@@ -72,15 +72,15 @@ function testRunWithOptionPlainOutputsNoColor() {
 function testRunWithOptionHelpOutputsHelp() {
     "$CMD" -h >"$CMD_LOG" 2>&1
 
-    assertNotEquals "Running with -h should output Usage help." $(cat $CMD_LOG | grep "Usage" | wc -l) 0
-    assertNotEquals "Running with -h should output Options help." $(cat $CMD_LOG | grep "Options" | wc -l) 0
-    assertNotEquals "Running with -h should output Examples help." $(cat $CMD_LOG | grep "Examples" | wc -l) 0
+    assertNotEquals "Running with -h should output Usage help." 0 $(cat $CMD_LOG | grep "Usage" | wc -l)
+    assertNotEquals "Running with -h should output Options help." 0 $(cat $CMD_LOG | grep "Options" | wc -l)
+    assertNotEquals "Running with -h should output Examples help." 0 $(cat $CMD_LOG | grep "Examples" | wc -l)
 }
 
 function testNoOptionsShowsUsage() {
     "$CMD" >"$CMD_LOG" 2>&1
 
-    assertNotEquals "Running without any parameters should output Usage." $(cat $CMD_LOG | grep "Usage" | wc -l) 0
+    assertNotEquals "Running without any parameters should output Usage." 0 $(cat $CMD_LOG | grep "Usage" | wc -l)
 }
 
 function testRemoveContainers() {
@@ -104,7 +104,23 @@ function testNonExistingModule() {
     "$CMD" -o -p does_not_exist >"$CMD_LOG" 2>&1
     RET=$?
 
-    assertNotEquals "Starting with a non-existing module, should fail with exit code > 0" $RET 0
+    assertNotEquals "Starting with a non-existing module, should fail with exit code > 0" 0 $RET
+}
+
+function testOdoo14() {
+    trace "Trying to run tests on odoo 14."
+    "$CMD" -o -p -g 14 module_without_failures >"$CMD_LOG" 2>&1
+    RET=$?
+
+    assertEquals "Running on odoo 14 should exit with success code 0." 0 $RET
+}
+
+function testOdoo16() {
+    trace "Trying to run tests on odoo 14."
+    "$CMD" -o -p -g 16 module_without_failures >"$CMD_LOG" 2>&1
+    RET=$?
+
+    assertEquals "Running on odoo 16 should exit with success code 0." 0 $RET
 }
 
 . shunit2

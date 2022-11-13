@@ -284,9 +284,24 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "hpotvr" opt; do
+while getopts "g:hoprtv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
+	g)
+		trace "-g detected"
+		VERSION=$OPTARG
+		DOCKER_ODOO_IMAGE_NAME=odoo:$VERSION
+		case $VERSION in
+		13 | 14 | 15)
+			DOCKER_PG_IMAGE_NAME=postgres:10
+			;;
+		16)
+			DOCKER_PG_IMAGE_NAME=postgres:12
+			;;
+		esac
+		trace "Will use DOCKER_ODOO_IMAGE_NAME [$DOCKER_ODOO_IMAGE_NAME] and DOCKER_PG_IMAGE_NAME [$DOCKER_PG_IMAGE_NAME]."
+		;;
+
 	h)
 		trace "-h detected -> Showing help message."
 		usage_message
@@ -295,14 +310,23 @@ while getopts "hpotvr" opt; do
 		echo
 		exit 0
 		;;
+	o)
+		trace "-o detected."
+		ONCE=1
+		;;
+
 	p)
 		trace "-p detected. Setting PLAIN=1."
 		PLAIN=1
 		;;
 
-	o)
-		trace "-o detected."
-		ONCE=1
+	r)
+		trace "-r detected. deleting conatiner + networks."
+		echo "Removing postgres and odoo containers used for running tests."
+		echo "They will be created automatically again when you run $0."
+		delete_containers
+		echo "Done."
+		exit 0
 		;;
 
 	t)
@@ -313,15 +337,6 @@ while getopts "hpotvr" opt; do
 			trace "-t detected, but no log file found. Showing tip to user."
 			echo "Please start $0 [module_name] first in a different console, then issue this command to tail the logs."
 		fi
-		;;
-
-	r)
-		trace "-r detected. deleting conatiner + networks."
-		echo "Removing postgres and odoo containers used for running tests."
-		echo "They will be created automatically again when you run $0."
-		delete_containers
-		echo "Done."
-		exit 0
 		;;
 
 	v)
