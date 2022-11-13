@@ -13,6 +13,9 @@ These tools are opinionated in the sense that they assume that you strive for im
 
 If you require manual interventions on your server, you will not like these tool :-)
 
+1. [odounit.sh](#odounitsh)
+2. [odorun.sh](#odorunsh)
+
 ## odounit.sh
 
 `Usage: ./odounit.sh [-h | -t | -r] [-p] [-o] [-g] [odoo_module_name]`
