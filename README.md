@@ -111,3 +111,4 @@ Bug reporting can be done through the issues section.
 Features can be suggested in the discussions section.
 Please also use the discussions section for all other communication.
 
+The current backlog is [located here](/BACKLOG.md).
