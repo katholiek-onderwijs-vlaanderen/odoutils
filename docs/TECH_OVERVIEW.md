@@ -41,11 +41,11 @@ To detect a change in the files of the module the user is testing, a combination
 More precisely:
 
 1) When a test run starts we calculate a hash for the entire module using `$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)`<br/>
-When a file is modified it's timestamp will be updated, resulting in a different hash value becuase ls -l includes the timestamp.<br/>
+When a file is modified, it's timestamp will be updated, resulting in a different hash value because `ls -l` includes the timestamp.<br/>
 When a file is removed or added, the hash will also change, as find will now have more or fewer lines.
 2) We then run the tests and parse the output of the odoo docker.
 3) After the tests were run we calculate a new hash for the folder of the module the user is testing.
-4) If there is a difference in both hash values, we run the tests again.<br/> Otherwise we wait for *any* event on any of the files in the module using `inotifywait -r -q "$MODULE"`
+4) If there is a difference in both hash values, we run the tests again.<br/> Otherwise we wait for *any* event on any of the files in the module using `inotifywait -r -q "$MODULE"`, and then go to step 1.
 
 ## Variables
 
