@@ -124,10 +124,11 @@ function ctrl_c() {
 	trace "Stopping postgres server"
 	docker stop $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 	echo "Done."
+	trace "----- Script ENDED -----"
 	exit 0
 }
 
-trace "*** Script starting..."
+trace "----- Script STARTING -----"
 
 # Check if all dependencies are installed..
 trace "Verifying that docker is installed."

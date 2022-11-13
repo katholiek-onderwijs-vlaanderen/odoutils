@@ -2,8 +2,12 @@ TO DO:
 
 MUST
 
-- [ ] Test fresh install on real ubuntu.
-- [ ] Add unit tests for odorun.sh
+- [ ] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
+- [ ] Add unit tests for odorun.sh. 
+- [ ] Handle / at end of module name as error. Cover in unit test.
+- [ ] Make reloading more robust for odorun. Handle changes to existing xml/.py files using --web and additions/removals/changes to manifest/__init__ do full reload.
+- [ ] Cover all cases for reloading in unit tests.
+- [ ] Remove -d flag. The scope of the tool is a runner script for developers, not something else.
 
 SHOULD
 - [ ] Add documentation for odorun.sh
