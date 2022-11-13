@@ -3,6 +3,7 @@ TO DO:
 MUST
 
 - [ ] Test fresh install on real ubuntu.
+- [ ] Add unit tests for odorun.sh
 
 SHOULD
 - [ ] Add documentation for odorun.sh
