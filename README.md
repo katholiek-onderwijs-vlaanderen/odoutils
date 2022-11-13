@@ -7,7 +7,7 @@ Currently two commands are implemented.
 and implementation, rather than on restarting/upgrading servers, scanning logs for FAIL messages etc.
 If provides a clear RED or GREEN display to allow you to very quickly know the status of your code.
 
-`odorun.sh` is a script that runs an odoo module (using docker), and restarts that server at the right times. It is designed to allow you to focus fully on doing development, rather than on restarting, upgrading modules, etc.. ** __*Under development*__ **
+`odorun.sh` is a script that runs an odoo module (using docker) for development purposes, and restarts that server at the right times. It is designed to allow you to focus fully on doing development, rather than on restarting, upgrading modules, etc.. ** __*Under development*__ **
 
 These tools are opinionated in the sense that they assume that you strive for immutable servers that can be (re)created in a deterministic fashion. In other words: it assumes that all details of installing your module are automated. 
 
