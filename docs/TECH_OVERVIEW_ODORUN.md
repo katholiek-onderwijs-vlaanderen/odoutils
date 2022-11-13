@@ -19,11 +19,11 @@ The odoo container is stopped when the user presses CTRL-C (but not removed, it 
 
 For more information on the command line options of odoo-bin see the [official odoo documentation](https://www.odoo.com/documentation/master/developer/cli.html).
 
-The *current folder* where you run `odounit.sh` is mapped as `/mnt/extra-addons` in the odoo container.
+The *current folder* where you run `odorun.sh` is mapped as `/mnt/extra-addons` in the odoo container.
 
 ## Scope for a network+containers set.
 
-Since the command to run odoo has to *include* (at creation time) the name of the module to run tests for (among other things) and docker containers are *immutable*, we create a new network and pg+odoo conatiners for any combination of values for these 3 parameters:
+Since the command to run odoo has to *include* (at creation time) the name of the module and docker containers are *immutable*, we create a new network and pg+odoo containers for any combination of values for these 3 parameters:
 
 * port number
 * module name
@@ -44,7 +44,7 @@ If, on the other hand:
 
 then the full docker container and database container is destroyed, and recreated from scratch. This will reinstall the module under development.
 
-This way the odoo server is always going to be in a reliable state. Reliable enough for the user to not have to worry about server restarts any more :).
+This way the odoo server is always in a reliable state. Reliable enough for the user to not have to worry about server restarts any more :).
 
 ## Variables
 

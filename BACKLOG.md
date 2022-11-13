@@ -7,11 +7,9 @@ MUST
 - [ ] Handle / at end of module name as error. Cover in unit test.
 - [ ] Make reloading more robust for odorun. Handle changes to existing xml/.py files using --web and additions/removals/changes to manifest/__init__ do full reload.
 - [ ] Cover all cases for reloading in unit tests.
-- [ ] Remove -d flag. The scope of the tool is a runner script for developers, not something else.
 
 SHOULD
 - [ ] Add documentation for odorun.sh
-- [ ] Add technical documentation for odorun.sh
 
 COULD
 - [ ] Add -q (quiet) flag to suppress output.
@@ -21,6 +19,8 @@ WILL NOT
 DONE:
 
 
+- [x] Add technical documentation for odorun.sh
+- [x] Remove -d flag from odorun.sh. The scope of the tool is a runner script for developers, not something else.
 - [x] Create odorun.sh for running one or more modules inside a docker container.
 - [x] Determine default postgres version automatically per version of odoo.
 - [x] Add parameter to allow specifying the version of odoo to use. (will require refactoring options handling)
