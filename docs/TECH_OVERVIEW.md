@@ -36,7 +36,7 @@ An md5hash is generated for each combination of those 3 input parameters, and is
 
 ## Detecting file changes
 
-To detect a change in the files of the module the user is testing, a combination of checking the filesystem and `inotifywait` is used.
+To detect a change in the files of the module the user is testing, a combination of checking th e filesystem and `inotifywait` is used.
 
 More precisely:
 
@@ -57,4 +57,4 @@ The code of the module logs a verbose trace in `/tmp/odounit-trace.log`. Tail it
 
 ## Unit tests
 
-A suite of test scripts is located in `tests` and can be run using `test.sh`. The test suite uses [shunit2](https://github.com/kward/shunit2) as xUnit testing framework.
+A suite of test scripts is located in `tests` and can be run using `test.sh`. The test suite uses [shunit2](https://github.com/kward/shunit2./com) as xUnit testing framework.

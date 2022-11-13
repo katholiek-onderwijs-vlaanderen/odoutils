@@ -99,4 +99,12 @@ function testRemoveContainers() {
     assertTrue "All docker containers should be removed." "[ $(docker ps -a | grep 'run-odoo-tests' | wc -l) -eq 0 ]"
 }
 
+function testNonExistingModule() {
+    trace "Trying to start with a non-existing module."
+    "$CMD" -o -p does_not_exist >"$CMD_LOG" 2>&1
+    RET=$?
+
+    assertNotEquals "Starting with a non-existing module, should fail with exit code > 0" $RET 0
+}
+
 . shunit2

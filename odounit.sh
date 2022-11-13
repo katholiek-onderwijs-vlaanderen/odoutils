@@ -352,77 +352,7 @@ if [ ! -d "$MODULE" ]; then
 	echo "Please specify a valid odoo module."
 	exit 2
 fi
-
 trace "Finished parsing of command line."
-## Process the command line arguments.
-#	if [ $# -eq 1 ]; then
-#		if [ "$1" = "--help" ]; then
-#			trace "--help detected -> Showing help message."
-#			usage_message
-#			echo
-#			help_message
-#			echo
-#			exit 1
-#		elif [ "$1" = "--tail" ]; then
-#			if [ -s $LOG ]; then
-#				trace "--tail detected. Starting tail -f on odoo container log."
-#				tail -f $LOG
-#			else
-#				trace "--tail detected, but no log file found. Showing tip to user."
-#				echo "Please start $0 [module_name] first in a different console, then issue this command to tail the logs."
-#			fi
-#			exit 0
-#		elif [ "$1" = "--remove" ]; then
-#			trace "--remove detected. deleting conatiner + networks."
-#			echo "Removing postgres and odoo containers used for running tests."
-#			echo "They will be created automatically again when you run $0."
-#			delete_containers
-#			echo "Done."
-#			exit 0
-#		else
-#			trace "Only command line parameter is the module name: $1"
-#			MODULE=$1
-#		fi
-#	elif [ $# -eq 2 ]; then
-#		if [ "$1" = "--once" ]; then
-#			trace "--once detected. Setting ONCE=1."
-#			ONCE=1
-#			MODULE=$2
-#		elif [ "$1" == "--plain" ]; then
-#			trace "--plain detected. Setting PLAIN=1."
-#			PLAIN=1
-#			MODULE=$2
-#		else
-#			trace "Illegal parameter combination. Showing usage message to user."
-#			echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
-#			usage_message
-#			exit 1
-#		fi
-#	elif [ $# -eq 3 ]; then
-#		if [ "$1" = "--once" ] && [ "$2" = "--plain" ]; then
-#			trace "--once --plain detected. Setting ONCE=1 and PLAIN=1."
-#			ONCE=1
-#			PLAIN=1
-#			MODULE=$3
-#			trace "Module to run test suite for: $MODULE"
-#		elif [ "$1" = "--plain" ] && [ "$2" = "--once" ]; then
-#			trace "--plain --once detected. Setting ONCE=1 and PLAIN=1."
-#			ONCE=1
-#			PLAIN=1
-#			MODULE=$3
-#			trace "Module to run test suite for: $MODULE"
-#		else
-#			trace "Illegal parameter combination. Showing usage message to user."
-#			echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
-#			usage_message
-#			exit 1
-#		fi
-#	else
-#		trace "Illegal parameter combination. Showing usage message to user."
-#		echo "Missing or illegal combination of parameters. Use $0 --help for documentation."
-#		usage_message
-#		exit 1
-#	fi
 
 # Log all variables for debugging purposes.
 trace "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME"
