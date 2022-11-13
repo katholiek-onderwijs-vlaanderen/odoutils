@@ -3,7 +3,7 @@
 Set of command line utilities for odoo development.
 Currently two commands are implemented.
 
-`odounit.sh` allows you to run the test suite for a module (in docker containers). It is designed to allow you to focus fully on test development
+`odounit.sh` allows you to run the test suite for a module (in a docker container). It is designed to allow you to focus fully on test development
 and implementation, rather than on restarting/upgrading servers, scanning logs for FAIL messages etc.
 If provides a clear RED or GREEN display to allow you to very quickly know the status of your code.
 
