@@ -29,6 +29,8 @@ DOCKER_PG_IMAGE_NAME=postgres:10
 
 # Run in loop, or run once. 0: loop / 1: once
 ONCE=0
+# PLAIN=0 -> Output in interactive mode with screen clear and color.
+# PLAIN=1 -> Do not clear the screen, and do not use ANSI escape codes to add colors to the output.
 PLAIN=0
 
 # Did the last run of the test suite fail? 0: All tests passed, 1: At least one test failed, 2: Some other (unknown error) occured.
