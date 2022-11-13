@@ -88,6 +88,7 @@ The script uses docker containers to isolate the entire process of running the t
 | ------ | ----------- |
 | `-g`   | Select the odoo version you want run the module on. Tested with odoo 14, 15 and 16.<br/> Depending on the odoo version, a fitting postgres image will be used for the database container. The pg version used is the one advised in the odoo [developer's documentation](https://www.odoo.com/documentation/master/administration/install/install.html#postgresql). |
 | `-h`   | Displays a help message. |
+| `-p`   | Set the HTTP port to run the odoo server on. Default: 8069. |
 | `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the module next time.<br/> The exit code is 0, also when nothing was deleted. |
 | `-v`   | Displays the script version number. |
 
