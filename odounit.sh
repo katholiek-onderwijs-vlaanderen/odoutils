@@ -46,9 +46,9 @@ function trace() {
 
 function ctrl_c_once() {
 	trace "Stopping odoo server"
-	docker stop $DOCKER_ODOO >>$TRACE 2>&1
+	docker stop $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
 	trace "Stopping postgres server"
-	docker stop $DOCKER_PG >>$TRACE 2>&1
+	docker stop $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 	exit 0
 }
 
@@ -79,7 +79,7 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [odoo_module_name]"
+	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [odoo_module_name]"
 }
 
 function help_message {
@@ -94,18 +94,22 @@ function help_message {
 	echo
 	echo "Options:"
 	echo
+	echo "    -g    select the version of odoo to use for running the test suite. Tested with: 14,15 and 16. "
+	echo
 	echo "    -h    Displays this help message."
 	echo
 	echo "    -o    Run test suite once. Do not enter loop to re-run test suite on file change."
 	echo
 	echo "    -p    Do not output in color. Do not clear screen."
 	echo
-	echo "    -r    Delete the database and odoo container, as well as the bridge network between them."
+	echo "    -r    Delete the database and odoo containers, as well as the bridge network between them."
 	echo "          The containers and network will be re-created when you run the tests next time."
 	echo "          The exit code is 0, also when nothing was deleted."
 	echo
 	echo "    -t    Tails the output of the test run."
 	echo "          You should start <$0 module_name> first, and issue $0 -t to view logs in a separate terminal session."
+	echo
+	echo "    -v    Displays the version of the script."
 	echo
 	echo "Exit codes: (mostly useful in combination with --once --plain, for scripting purposes)"
 	echo

@@ -5,15 +5,18 @@ MUST
 - [ ] Test fresh install on real ubuntu.
 
 SHOULD
-- [ ] Create odorun.sh for running one or more modules from docker.
+- [ ] Add documentation for odorun.sh
+- [ ] Add technical documentation for odorun.sh
 
 COULD
+- [ ] Add -q (quiet) flag to suppress output.
 
 WILL NOT
 
 DONE:
 
 
+- [x] Create odorun.sh for running one or more modules inside a docker container.
 - [x] Determine default postgres version automatically per version of odoo.
 - [x] Add parameter to allow specifying the version of odoo to use. (will require refactoring options handling)
 - [x] Add -v for script versioning.
