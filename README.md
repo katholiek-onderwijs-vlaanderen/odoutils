@@ -8,7 +8,7 @@ and implementation, rather than on restarting/upgrading servers, scanning logs f
 If provides a clear RED or GREEN display to allow you to very quickly know the status of your code.
 
 `odorun.sh` is a script that runs odoo (using docker), and re-loads the server at the right times. It is designed to allow you to focus fully on doing 
-development, rather than on restarting the server, upgrading modules, etc.. *Under development*
+development, rather than on restarting the server, upgrading modules, etc.. ** __*Under development*__ **
 
 ## odounit.sh
 
