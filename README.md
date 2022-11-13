@@ -7,12 +7,15 @@ Currently two commands are implemented.
 and implementation, rather than on restarting/upgrading servers, scanning logs for FAIL messages etc.
 If provides a clear RED or GREEN display to allow you to very quickly know the status of your code.
 
-`odorun.sh` is a script that runs odoo (using docker), and re-loads the server at the right times. It is designed to allow you to focus fully on doing 
-development, rather than on restarting the server, upgrading modules, etc.. ** __*Under development*__ **
+`odorun.sh` is a script that runs an odoo module (using docker), and restarts that server at the right times. It is designed to allow you to focus fully on doing development, rather than on restarting, upgrading modules, etc.. ** __*Under development*__ **
+
+These tools are opinionated in the sense that they assume that you strive for immutable servers that can be (re)created in a deterministic fashion. In other words: it assumes that all details of installing your module are automated. 
+
+If you require manual interventions on your server, you will not like these tool :-)
 
 ## odounit.sh
 
-`Usage: ./odounit.sh [-h | -t | -r] [-p] [-o] [odoo_module_name]`
+`Usage: ./odounit.sh [-h | -t | -r] [-p] [-o] [-g] [odoo_module_name]`
 
 `./odounit.sh` is a test suite runner for odoo modules. It is designed to allow you get quick feedback on changes
 you make in the test suite or the implementation of your module.
@@ -68,7 +71,33 @@ Delete all containers and log files (by default containers are created and then 
 
 `$ ./odounit.sh -r`
 
-## 
+## odorun.sh
+
+`Usage: ./odorun.sh [-h | -r] [-o] [-g] [odoo_module_name]`
+
+`./odorun.sh` is a module runner for development. It allows you to fire up a fresh odoo container with a single command. It is designed to take care of module reloading, upgrading, etc.. Simply fire it up, develop your module, and then check result by hitting the refresh button on your browser. 
+
+The script uses docker containers to isolate the entire process of running the tests from the rest of your system.
+
+### Options:
+
+| Option | Description |
+| ------ | ----------- |
+| `-g`   | Select the odoo version you want run the module on. Tested with odoo 14, 15 and 16.<br/> Depending on the odoo version, a fitting postgres image will be used for the database container. The pg version used is the one advised in the odoo [developer's documentation](https://www.odoo.com/documentation/master/administration/install/install.html#postgresql). |
+| `-h`   | Displays a help message. |
+| `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the module next time.<br/> The exit code is 0, also when nothing was deleted. |
+| `-v`   | Displays the script version number. |
+
+
+### Examples:
+
+Run a module with odoo 16:
+
+`$ ./odounit.sh -g 16 my_module`
+
+Delete all containers and log files (by default containers are created and then reused for speed):
+
+`$ ./odounit.sh -r`
 
 # Contributing
 
