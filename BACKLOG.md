@@ -3,7 +3,6 @@ TO DO:
 MUST
 
 - [ ] Test fresh install on real ubuntu.
-- [ ] Add technical docs.
 
 SHOULD
 - [ ] Add parameter to allow specifying the version of postgres to use. (will require refactoring options handling)
@@ -19,6 +18,7 @@ WILL NOT
 DONE:
 
 
+- [x] Add technical docs.
 - [x] Update README.md to add user documentation.
 - [x] Added set -euo pipefail to make script more robust.
 - [x] Rename repository to odoutils.sh.
