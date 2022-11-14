@@ -11,13 +11,13 @@ SHOULD
 
 COULD
 - [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
-- [ ] Add -a (always) flag to odorun.sh for those that don't trust --web xml,reload. 
 
 WILL NOT
 
 DONE:
 
 
+- [x] Add -a (always) flag to odorun.sh for those that don't trust --web xml,reload. 
 - [x] Make reloading more robust for odorun. Handle changes to existing xml/.py files using --web and everything else with full reload/recreate.
 - [x] Handle / at end of module. Cover in unit test.
 - [x] Add technical documentation for odorun.sh

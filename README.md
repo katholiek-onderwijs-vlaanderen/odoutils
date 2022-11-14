@@ -111,7 +111,8 @@ The script uses docker containers to isolate the entire process of running the t
 
 | Option | Description |
 | ------ | ----------- |
-| `-g`   | Select the odoo version you want run the module on. Tested with odoo 14, 15 and 16.<br/> Depending on the odoo version, a fitting postgres image will be used for the database container. The pg version used is the one advised in the odoo [developer's documentation](https://www.odoo.com/documentation/master/administration/install/install.html#postgresql). |
+| `-a`   | Always restart the server, on any file modification. (Do not rely on --web xml,reload) |
+| `-g`   | Select the odoo version you want run the module on. Tested with odoo 14, 15 and 16.<br/> Depending on the odoo version, a fitting postgres image will be used for the database container. The pg version used is the one advised in the odoo [developer's documentation](https://www.odoo.com/documentation/master/administration/install/install.html#postgresql). Default: 15 |
 | `-h`   | Displays a help message. |
 | `-p`   | Set the HTTP port to run the odoo server on. Default: 8069. |
 | `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the module next time.<br/> The exit code is 0, also when nothing was deleted. |
@@ -120,13 +121,21 @@ The script uses docker containers to isolate the entire process of running the t
 
 ### Examples:
 
-Run a module with odoo 16:
+Run `my_module` on odoo 16:
 
-`$ ./odounit.sh -g 16 my_module`
+`$ ./odorun.sh -g 16 my_module`
 
 Delete all containers and log files (by default containers are created and then reused for speed):
 
-`$ ./odounit.sh -r`
+`$ ./odorun.sh -r`
+
+Run `my_module` on port 9090:
+
+`$ ./odorun.sh -p 9090 my_module`
+
+Run `my_module` and always restart on any file change (not relying on --web xml,reload):
+
+`$ ./odorun.sh -a my_module`
 
 # Contributing
 

@@ -73,7 +73,7 @@ function help_message {
 	echo
 	echo "    -a    Always restart the server, on any file modification. (Do not rely on --web xml,reload)"
 	echo
-	echo "    -g    Selects the odoo version to run. Tested with: 14,15 and 16."
+	echo "    -g    Selects the odoo version to run. Tested with: 14,15 and 16. Default: 15."
 	echo
 	echo "    -h    Displays this help message."
 	echo
