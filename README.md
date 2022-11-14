@@ -31,7 +31,7 @@ $ chmod u+x odounit.sh
 $ chmod u+x odorun.sh
 ``` 
 
-To make running the scripts convenient, you can consider adding 2 aliasses to your `~/.bashrc` script, like this:
+To make running the scripts convenient, you can consider adding 2 aliasses to your `~/.bash_aliases` script, like this:
 
 ```
 $ vi ~/.bash_aliases
