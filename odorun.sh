@@ -247,8 +247,6 @@ trace "DOCKER_NETWORK_FULL_NAME = [$DOCKER_NETWORK_FULL_NAME]"
 trace "DOCKER_PG_FULL_NAME = [$DOCKER_PG_FULL_NAME]"
 trace "DOCKER_ODOO_FULL_NAME = [$DOCKER_ODOO_FULL_NAME]"
 
-trace "DEV_MODE = [$DEV_MODE]"
-
 echo "Checking if the user-defined bridge network exists." >>$TRACE
 if [ $(docker network ls | grep "$DOCKER_NETWORK_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the user-defined bridge network."

@@ -434,6 +434,7 @@ if [ "$ONCE" -eq 0 ]; then
 		while [ "$hash" = "$hash2" ]; do
 			inotifywait -r -q "$MODULE" >>$TRACE 2>&1
 			hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
+			trace "Calculated hash of the folder after inotifywait: $hash2"
 		done
 	done
 else
