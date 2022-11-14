@@ -34,6 +34,9 @@ DOCKER_PG_IMAGE_NAME=postgres:10
 # Can be overridden using the -p flag.
 PORT=8069
 
+# Set to 1 if the user wants to cycle the container on every file change (not relying on --web xml,reload)
+ALWAYS_RESTART=0
+
 function trace() {
 	echo "$1" >>"$TRACE" 2>&1
 }
@@ -42,7 +45,7 @@ function please_install {
 	echo "This script requires these command to run:"
 	echo
 	echo " - docker (from docker.io)"
-	echo " - inotifywait (from inotify-tools)."	
+	echo " - inotifywait (from inotify-tools)."
 	echo
 	echo "Please install them."
 	echo
@@ -57,7 +60,7 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [odoo_module_name]"
+	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [odoo_module_name]"
 }
 
 function help_message {
@@ -67,6 +70,8 @@ function help_message {
 	echo "read / reloaded. No need for manually restarting the server."
 	echo
 	echo "Options:"
+	echo
+	echo "    -a    Always restart the server, on any file modification. (Do not rely on --web xml,reload)"
 	echo
 	echo "    -g    Selects the odoo version to run. Tested with: 14,15 and 16."
 	echo
@@ -85,8 +90,14 @@ function help_message {
 	echo "Run the test suite of module 'my_module' in a loop and show full color output:"
 	echo "$ $0 my_module"
 	echo
-	echo "Install/update my_module and run it from a set of docker container, on odoo 16 and in development mode:"
-	echo "$ $0 -g 16 -d my_module"
+	echo "Install/update my_module and run it from a set of docker container, on odoo 16:"
+	echo "$ $0 -g 16 my_module"
+	echo
+	echo "Run the test suite of module 'my_module' in a loop - restarting the service ANY time a file is updated."
+	echo "$ $0 -a my_module"
+	echo
+	echo "Run the test suite of module 'my_module' on port 9090:"
+	echo "$ $0 -p 9090 my_module"
 	echo
 }
 
@@ -126,6 +137,27 @@ function ctrl_c() {
 	exit 0
 }
 
+function restart_server {
+	trace "Restarting server."
+
+	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
+	trace "Timestamp when we are restarting: $timestamp"
+
+	HASH_XML_PY_NO_MANIFEST_OR_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '^.*\.xml$\|^.*\.py$' | grep -v '__.*__.py$' | sort | md5sum)
+	HASH_MANIFEST_AND_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '__.*__.py$' | sort | md5sum)
+	HASH_OTHERS=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep -v '.*\.xml$\|.*\.py$' | sort | md5sum)
+	trace "Hash for all .xml and .py files, excluding __init__.py and __manifest__.py files : [$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY]."
+	trace "Hash for all __init__.py and __manifest__.py files:                                [$HASH_MANIFEST_AND_INIT_PY]"
+	trace "Hash for all other files:                                                          [$HASH_OTHERS]"
+
+	trace "(Re)starting the odoo server to run the module."
+	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
+
+	trace "Starting tailing of docker log in background."
+	docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
+
+}
+
 trace "----- Script STARTING -----"
 
 # Check if all dependencies are installed..
@@ -158,9 +190,14 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "g:hp:rv" opt; do
+while getopts "ag:hp:rv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
+	a)
+		trace "-a detected"
+		ALWAYS_RESTART=1
+		;;
+
 	g)
 		trace "-g detected."
 		VERSION=$OPTARG
@@ -287,9 +324,9 @@ trace "Timestamp when we are running: $timestamp"
 HASH_XML_PY_NO_MANIFEST_OR_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '^.*\.xml$\|^.*\.py$' | grep -v '__.*__.py$' | sort | md5sum)
 HASH_MANIFEST_AND_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '__.*__.py$' | sort | md5sum)
 HASH_OTHERS=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep -v '.*\.xml$\|.*\.py$' | sort | md5sum)
-	trace "HASH_XML_PY_NO_MANIFEST_OR_INIT_PY  = [$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY]."
-	trace "HASH_MANIFEST_AND_INIT_PY           = [$HASH_MANIFEST_AND_INIT_PY]"
-	trace "HASH_OTHERS                         = [$HASH_OTHERS]"
+trace "HASH_XML_PY_NO_MANIFEST_OR_INIT_PY  = [$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY]."
+trace "HASH_MANIFEST_AND_INIT_PY           = [$HASH_MANIFEST_AND_INIT_PY]"
+trace "HASH_OTHERS                         = [$HASH_OTHERS]"
 
 trace "(Re)starting the odoo server to run the module."
 docker start $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
@@ -305,29 +342,14 @@ HASH2_OTHERS="$HASH_OTHERS"
 
 while true; do
 	if [ "$HASH_MANIFEST_AND_INIT_PY" != "$HASH2_MANIFEST_AND_INIT_PY" ] || [ "$HASH_OTHERS" != "$HASH2_OTHERS" ]; then
-		trace "Change detected in a __MANIFEST__.py, an __INIT__.py or in any other non-xml and non-python file."
-		trace "A server RESTART is necessary."
-		trace "Restarting server."
-
-		timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
-		trace "Timestamp when we are restarting: $timestamp"
-
-		HASH_XML_PY_NO_MANIFEST_OR_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '^.*\.xml$\|^.*\.py$' | grep -v '__.*__.py$' | sort | md5sum)
-		HASH_MANIFEST_AND_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '__.*__.py$' | sort | md5sum)
-		HASH_OTHERS=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep -v '.*\.xml$\|.*\.py$' | sort | md5sum)
-		trace "Hash for all .xml and .py files, excluding __init__.py and __manifest__.py files : [$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY]."
-		trace "Hash for all __init__.py and __manifest__.py files:                                [$HASH_MANIFEST_AND_INIT_PY]"
-		trace "Hash for all other files:                                                          [$HASH_OTHERS]"
-
-		trace "(Re)starting the odoo server to run the module."
-		docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
-
-		trace "Starting tailing of docker log in background."
-		docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
-
+		restart_server
 	elif [ "$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY" != "$HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY" ]; then
-		trace "Change detected in a .xml or .py file (other than __MANIFEST.py and __INIT__.py)."
-		trace "Not doing anything as odoo-bin will handle it due to --dev xml,reload."
+		if [ "$ALWAYS_RESTART" -eq 0 ]; then
+			trace "Change detected in a .xml or .py file (other than __MANIFEST.py and __INIT__.py)."
+			trace "Not doing anything as odoo-bin will handle it due to --dev xml,reload."
+		else
+			restart_server
+		fi
 	fi
 
 	inotifywait -r -q "$MODULE" >>$TRACE 2>&1

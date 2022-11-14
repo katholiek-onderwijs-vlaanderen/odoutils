@@ -4,7 +4,7 @@ MUST
 
 - [ ] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
 - [ ] Add unit tests for odorun.sh. 
-- [ ] Cover all cases for reloading in oroun in unit tests.
+- [ ] Cover all cases for reloading in odorun in unit tests.
 
 SHOULD
 - [ ] Add documentation for odorun.sh
