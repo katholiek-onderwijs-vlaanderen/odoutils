@@ -16,6 +16,22 @@ If you require manual interventions on your server, you will not like these tool
 1. [odounit.sh](#odounitsh)
 2. [odorun.sh](#odorunsh)
 
+## Installation
+
+Download [`odounit.sh`](/odounit.sh) and [`odorun.sh`](/odorun.sh).
+Place them in your location of choice.
+
+To make running the scripts convenient, you can consider adding 2 aliasses to your `~/.bashrc` script, like this:
+
+```
+$ vi ~/.bash_aliases
+
+alias odorun='~/prj/odoutils/odorun.sh'
+alias odounit='~/prj/odoutils/odounit.sh'
+
+```
+
+
 ## odounit.sh
 
 `Usage: ./odounit.sh [-h | -t | -r] [-p] [-o] [-g] [odoo_module_name]`
