@@ -4,8 +4,7 @@ MUST
 
 - [ ] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
 - [ ] Add unit tests for odorun.sh. 
-- [ ] Make reloading more robust for odorun. Handle changes to existing xml/.py files using --web and everything else with full reload/recreate.
-- [ ] Cover all cases for reloading in unit tests.
+- [ ] Cover all cases for reloading in oroun in unit tests.
 
 SHOULD
 - [ ] Add documentation for odorun.sh
@@ -19,6 +18,7 @@ WILL NOT
 DONE:
 
 
+- [x] Make reloading more robust for odorun. Handle changes to existing xml/.py files using --web and everything else with full reload/recreate.
 - [x] Handle / at end of module. Cover in unit test.
 - [x] Add technical documentation for odorun.sh
 - [x] Remove -d flag from odorun.sh. The scope of the tool is a runner script for developers, not something else.
