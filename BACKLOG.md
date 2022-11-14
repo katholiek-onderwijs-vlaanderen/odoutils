@@ -12,6 +12,7 @@ SHOULD
 
 COULD
 - [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
+- [ ] Add -a (always) flag to odorun.sh for those that don't trust --web xml,reload. 
 
 WILL NOT
 
