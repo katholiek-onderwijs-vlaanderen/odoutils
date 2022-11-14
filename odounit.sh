@@ -424,16 +424,16 @@ if [ "$ONCE" -eq 0 ]; then
 	trap ctrl_c INT
 
 	while true; do
-		hash=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
+		hash=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
 		trace "Calculated hash for the folder where we are running AT START OF CYCLE: $hash"
 
 		run_tests
 
-		hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
+		hash2=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
 		trace "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2"
 		while [ "$hash" = "$hash2" ]; do
 			inotifywait -r -q "$MODULE" >>$TRACE 2>&1
-			hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
+			hash2=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
 			trace "Calculated hash of the folder after inotifywait: $hash2"
 		done
 	done

@@ -10,6 +10,8 @@ set -euo pipefail
 # Version of the script
 SCRIPT_VERSION=0.1
 
+# Temp file where the output of the docker running the module is stored.
+LOG=/tmp/odounit-odoo-container.log
 # Temp file where debug tracing is written. Tail it to debug the script.
 TRACE=/tmp/odorun-trace.log
 
@@ -28,7 +30,7 @@ DOCKER_ODOO_IMAGE_NAME=odoo:15
 # Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
 DOCKER_PG_IMAGE_NAME=postgres:10
 
-# On what port on the host machine will the http port be mapped? Default: 8069. 
+# On what port on the host machine will the http port be mapped? Default: 8069.
 # Can be overridden using the -p flag.
 PORT=8069
 
@@ -40,12 +42,13 @@ function please_install {
 	echo "This script requires these command to run:"
 	echo
 	echo " - docker (from docker.io)"
+	echo " - inotifywait (from inotify-tools)."	
 	echo
-	echo "Please install it."
+	echo "Please install them."
 	echo
 	echo "On Ubuntu for example:"
 	echo
-	echo "$ sudo apt-get install docker.io"
+	echo "$ sudo apt-get install docker.io inotify-tools"
 	echo
 	echo "In the above docker.io is the default docker package that is bundled with ubuntu."
 	echo "If you want a more recent version please follow the instructions on the docker website."
@@ -74,7 +77,7 @@ function help_message {
 	echo "    -r    Delete the database and odoo containers, as well as the bridge network between them."
 	echo "          The containers and network will be re-created when you run the tests next time."
 	echo "          The exit code is 0, also when nothing was deleted."
-	echo 
+	echo
 	echo "    -v    Displays the version of the script."
 	echo
 	echo "Examples:"
@@ -128,6 +131,8 @@ trace "----- Script STARTING -----"
 # Check if all dependencies are installed..
 trace "Verifying that docker is installed."
 command -v docker >>$TRACE 2>&1 || please_install docker docker.io
+trace "Verifying that inotifywait is installed."
+command -v inotifywait >>$TRACE 2>&1 || please_install inotifywait inotify-tools
 
 # If we are running on WSL, check that the docker command
 trace "Verifying that docker command is available."
@@ -279,8 +284,59 @@ docker start $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
 trace "Timestamp when we are running: $timestamp"
 
+HASH_XML_PY_NO_MANIFEST_OR_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '^.*\.xml$\|^.*\.py$' | grep -v '__.*__.py$' | sort | md5sum)
+HASH_MANIFEST_AND_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '__.*__.py$' | sort | md5sum)
+HASH_OTHERS=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep -v '.*\.xml$\|.*\.py$' | sort | md5sum)
+	trace "HASH_XML_PY_NO_MANIFEST_OR_INIT_PY  = [$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY]."
+	trace "HASH_MANIFEST_AND_INIT_PY           = [$HASH_MANIFEST_AND_INIT_PY]"
+	trace "HASH_OTHERS                         = [$HASH_OTHERS]"
+
 trace "(Re)starting the odoo server to run the module."
 docker start $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
 
 trap ctrl_c INT
-docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME
+trace "Starting tailing of docker log in background."
+docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
+
+trace "Waiting for a change to occur in files that need a restart."
+HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY="$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY"
+HASH2_MANIFEST_AND_INIT_PY="$HASH_MANIFEST_AND_INIT_PY"
+HASH2_OTHERS="$HASH_OTHERS"
+
+while true; do
+	if [ "$HASH_MANIFEST_AND_INIT_PY" != "$HASH2_MANIFEST_AND_INIT_PY" ] || [ "$HASH_OTHERS" != "$HASH2_OTHERS" ]; then
+		trace "Change detected in a __MANIFEST__.py, an __INIT__.py or in any other non-xml and non-python file."
+		trace "A server RESTART is necessary."
+		trace "Restarting server."
+
+		timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
+		trace "Timestamp when we are restarting: $timestamp"
+
+		HASH_XML_PY_NO_MANIFEST_OR_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '^.*\.xml$\|^.*\.py$' | grep -v '__.*__.py$' | sort | md5sum)
+		HASH_MANIFEST_AND_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '__.*__.py$' | sort | md5sum)
+		HASH_OTHERS=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep -v '.*\.xml$\|.*\.py$' | sort | md5sum)
+		trace "Hash for all .xml and .py files, excluding __init__.py and __manifest__.py files : [$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY]."
+		trace "Hash for all __init__.py and __manifest__.py files:                                [$HASH_MANIFEST_AND_INIT_PY]"
+		trace "Hash for all other files:                                                          [$HASH_OTHERS]"
+
+		trace "(Re)starting the odoo server to run the module."
+		docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
+
+		trace "Starting tailing of docker log in background."
+		docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
+
+	elif [ "$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY" != "$HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY" ]; then
+		trace "Change detected in a .xml or .py file (other than __MANIFEST.py and __INIT__.py)."
+		trace "Not doing anything as odoo-bin will handle it due to --dev xml,reload."
+	fi
+
+	inotifywait -r -q "$MODULE" >>$TRACE 2>&1
+	trace "Re-calculating HASH2 values."
+	HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '^.*\.xml$\|^.*\.py$' | grep -v '__.*__.py$' | sort | md5sum)
+	HASH2_MANIFEST_AND_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '__.*__.py$' | sort | md5sum)
+	HASH2_OTHERS=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep -v '.*\.xml$\|.*\.py$' | sort | md5sum)
+
+	trace "HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY = [$HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY]."
+	trace "HASH2_MANIFEST_AND_INIT_PY          = [$HASH2_MANIFEST_AND_INIT_PY]"
+	trace "HASH2_OTHERS                        = [$HASH2_OTHERS]"
+done
