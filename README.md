@@ -19,7 +19,7 @@ If you require manual interventions on your server, you will not like these tool
 ## Installation
 
 Download [`odounit.sh`](/odounit.sh) and [`odorun.sh`](/odorun.sh).
-Place them in your location of choice:
+Place them in your location of choice, and make them executable:
 
 ```
 $ cd ~
@@ -27,6 +27,8 @@ $ mkdir odoutils
 $ cd odoutils
 $ wget https://github.com/dimitrydhondt/odoutils/blob/main/odounit.sh
 $ wget https://github.com/dimitrydhondt/odoutils/blob/main/odorun.sh
+$ chmod u+x odounit.sh
+$ chmod u+x odorun.sh
 ``` 
 
 To make running the scripts convenient, you can consider adding 2 aliasses to your `~/.bashrc` script, like this:
