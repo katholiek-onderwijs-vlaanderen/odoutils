@@ -431,13 +431,10 @@ if [ "$ONCE" -eq 0 ]; then
 
 		hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
 		trace "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2"
-		if [ "$hash" = "$hash2" ]; then
-			trace "Waiting for changes on the filesystem."
-			while [ "$hash" = "$hash2" ]; do
-				inotifywait -r -q "$MODULE" >>$TRACE 2>&1
-				hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
-			done
-		fi
+		while [ "$hash" = "$hash2" ]; do
+			inotifywait -r -q "$MODULE" >>$TRACE 2>&1
+			hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
+		done
 	done
 else
 	# Set handling of CTRL-C to allow the user to stop the loop.
