@@ -433,7 +433,10 @@ if [ "$ONCE" -eq 0 ]; then
 		trace "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2"
 		if [ "$hash" = "$hash2" ]; then
 			trace "Waiting for changes on the filesystem."
-			inotifywait -r -q "$MODULE" >>$TRACE 2>&1
+			while [ "$hash" = "$hash2" ]; do
+				inotifywait -r -q "$MODULE" >>$TRACE 2>&1
+				hash2=$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)
+			done
 		fi
 	done
 else
