@@ -362,7 +362,7 @@ if [ -z ${1+x} ]; then
 	exit 2
 fi
 
-MODULE=$1
+MODULE=$(echo "$1" | sed 's/\///g')
 trace "Module to test: [$MODULE]."
 
 if [ ! -d "$MODULE" ]; then

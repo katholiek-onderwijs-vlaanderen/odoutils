@@ -123,4 +123,12 @@ function testOdoo16() {
     assertEquals "Running on odoo 16 should exit with success code 0." 0 $RET
 }
 
+function testTrailingSlashOnModuleName() {
+    trace "Trying to run [module_without_failures/] - with trailing slash on module name. Should run."
+    "$CMD" -o -p module_without_failures/ >"$CMD_LOG" 2>&1
+    RET=$?
+
+    assertEquals "Running on odoo 16 should exit with success code 0." 0 $RET
+}
+
 . shunit2

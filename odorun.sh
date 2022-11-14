@@ -54,7 +54,7 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [odoo_module_name]"
+	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [odoo_module_name]"
 }
 
 function help_message {
