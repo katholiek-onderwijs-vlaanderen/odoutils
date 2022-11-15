@@ -3,11 +3,9 @@ TO DO:
 MUST
 
 - [ ] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
-- [ ] Add unit tests for odorun.sh. 
-- [ ] Cover all cases for reloading in odorun in unit tests.
+- [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests.
 
 SHOULD
-- [ ] Add documentation for odorun.sh
 
 COULD
 - [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
@@ -17,6 +15,7 @@ WILL NOT
 DONE:
 
 
+- [x] Add documentation for odorun.sh
 - [x] Add -a (always) flag to odorun.sh for those that don't trust --web xml,reload. 
 - [x] Make reloading more robust for odorun. Handle changes to existing xml/.py files using --web and everything else with full reload/recreate.
 - [x] Handle / at end of module. Cover in unit test.
