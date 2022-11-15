@@ -6,6 +6,7 @@ MUST
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests.
 
 SHOULD
+- [ ] Add -s flag to run slow tests to odounit.sh
 
 COULD
 - [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
