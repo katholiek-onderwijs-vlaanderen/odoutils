@@ -2,10 +2,7 @@
 
 # e - script stops on error (return != 0)
 # u - error if undefined variable
-# o pipefail - script fails if one of the piped commands fails
-# x - output each line for debugging purposes.
-set -euo pipefail
-#set -x
+set -eu
 
 # Version of the script
 SCRIPT_VERSION=0.9
@@ -164,6 +161,7 @@ function delete_containers {
 }
 
 function run_tests {
+	trace "run_tests starting."
 	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
 	trace "Timestamp when we are running: $timestamp"
 
@@ -207,6 +205,7 @@ function run_tests {
 			echo "Traces of the first failures:"
 		fi
 		cat "$LOG" | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
+		trace "Finished logging of stack traces for failures."
 	elif [ $(cat $LOG | grep '.* ERROR odoo .*' | wc -l) -ne 0 ]; then
 		LAST_RUN_FAILED=2
 
@@ -254,6 +253,7 @@ function run_tests {
 		fi
 		tail -n $lines "$LOG" | cut -c -$(tput cols)
 	fi
+	trace "run_tests ended."
 }
 
 trace "*** Script starting..."
@@ -439,6 +439,7 @@ if [ "$ONCE" -eq 0 ]; then
 
 		run_tests
 
+		trace "Calculating hash of the filer now."
 		hash2=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
 		trace "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2"
 		while [ "$hash" = "$hash2" ]; do

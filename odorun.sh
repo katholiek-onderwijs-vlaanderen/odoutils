@@ -2,10 +2,7 @@
 
 # e - script stops on error (return != 0)
 # u - error if undefined variable
-# o pipefail - script fails if one of the piped commands fails
-# x - output each line for debugging purposes.
-set -euo pipefail
-#set -x
+set -eu
 
 # Version of the script
 SCRIPT_VERSION=0.1
