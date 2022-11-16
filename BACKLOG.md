@@ -15,7 +15,7 @@ WILL NOT
 
 DONE:
 
-
+- [x] add -d (debug) flag to trace scripts for debugging.
 - [x] Add documentation for odorun.sh
 - [x] Add -a (always) flag to odorun.sh for those that don't trust --web xml,reload. 
 - [x] Make reloading more robust for odorun. Handle changes to existing xml/.py files using --web and everything else with full reload/recreate.

@@ -10,10 +10,8 @@ set -euo pipefail
 # Version of the script
 SCRIPT_VERSION=0.1
 
-# Temp file where the output of the docker running the module is stored.
-LOG=/tmp/odounit-odoo-container.log
 # Temp file where debug tracing is written. Tail it to debug the script.
-TRACE=/tmp/odorun-trace.log
+TRACE=/tmp/odoutils-trace.log
 
 # Base names for dockers.
 # The actual name incorporates a hash that is dependent on module to test, odoo version and database version.
@@ -60,7 +58,7 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [odoo_module_name]"
+	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [-d] [odoo_module_name]"
 }
 
 function help_message {
@@ -84,6 +82,10 @@ function help_message {
 	echo "          The exit code is 0, also when nothing was deleted."
 	echo
 	echo "    -v    Displays the version of the script."
+	echo
+	echo
+	echo "    -d    Trace the script for debugging purposes."
+	echo "          Run the script itself first in a separate terminal session, then $0 -d to trace it."
 	echo
 	echo "Examples:"
 	echo
@@ -190,12 +192,18 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "ag:hp:rv" opt; do
+while getopts "adg:hp:rv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
 	a)
-		trace "-a detected"
+		trace "-a detected. Setting ALWAY_RESTART=1"
 		ALWAYS_RESTART=1
+		;;
+
+	d)
+		touch "$TRACE"
+		tail -f "$TRACE"
+		exit 0
 		;;
 
 	g)
@@ -261,7 +269,7 @@ if [ -z ${1+x} ]; then
 	exit 2
 fi
 
-MODULE=$1
+MODULE=$(echo "$1" | sed 's/\///g')
 trace "Module to install/update and run: [$MODULE]."
 
 if [ ! -d "$MODULE" ]; then

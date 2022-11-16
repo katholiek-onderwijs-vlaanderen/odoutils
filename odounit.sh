@@ -13,7 +13,7 @@ SCRIPT_VERSION=0.9
 # Temp file where the output of the docker running the test suite is stored.
 LOG=/tmp/odounit-odoo-container.log
 # Temp file where debug tracing is written. Tail it to debug the script.
-TRACE=/tmp/odounit-trace.log
+TRACE=/tmp/odoutils-trace.log
 
 # Base names for dockers.
 # The actual name incorporates a hash that is dependent on module to test, odoo version and database version.
@@ -110,6 +110,10 @@ function help_message {
 	echo "          You should start <$0 module_name> first, and issue $0 -t to view logs in a separate terminal session."
 	echo
 	echo "    -v    Displays the version of the script."
+	echo
+	echo
+	echo "    -d    Trace the script for debugging purposes."
+	echo "          Run the script itself first in a separate terminal session, then $0 -d to trace it."
 	echo
 	echo "Exit codes: (mostly useful in combination with --once --plain, for scripting purposes)"
 	echo
@@ -288,9 +292,15 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "g:hoprtv" opt; do
+while getopts "dg:hoprtv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
+	d)
+		touch "$TRACE"
+		tail -f "$TRACE"
+		exit 0
+		;;
+
 	g)
 		trace "-g detected"
 		VERSION=$OPTARG
