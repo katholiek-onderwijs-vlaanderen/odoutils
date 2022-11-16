@@ -3,10 +3,14 @@ TO DO:
 MUST
 
 - [ ] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
-- [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests.
+- [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
+- [ ] Add pgadmin to odorun.sh.
+- [ ] Add smtp4dev to odorun.sh.
 
 SHOULD
-- [ ] Add -s flag to run slow tests to odounit.sh
+- [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
+- [ ] Add -b for setting a data_b_ase port - so you can point pgadmin at it :)
+- [ ] Add -m for setting the http port for the smtp4dev _m_ail server.
 
 COULD
 - [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
