@@ -29,9 +29,6 @@ DOCKER_PG_IMAGE_NAME=postgres:10
 # Can be overridden using the -p flag.
 PORT=8069
 
-# Set to 1 if the user wants to cycle the container on every file change (not relying on --web xml,reload)
-ALWAYS_RESTART=0
-
 function trace() {
 	echo "$1" >>"$TRACE" 2>&1
 }
@@ -65,8 +62,6 @@ function help_message {
 	echo "read / reloaded. No need for manually restarting the server."
 	echo
 	echo "Options:"
-	echo
-	echo "    -a    Always restart the server, on any file modification. (Do not rely on --web xml,reload)"
 	echo
 	echo "    -g    Selects the odoo version to run. Tested with: 14,15 and 16. Default: 15."
 	echo
@@ -313,7 +308,7 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-	docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --no-database-list --dev xml,reload >>$TRACE 2>&1
+	docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" --no-database-list >>$TRACE 2>&1
 else
 	trace "Docker $DOCKER_ODOO_FULL_NAME still exists, re-using it."
 fi
@@ -326,12 +321,8 @@ docker start $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
 trace "Timestamp when we are running: $timestamp"
 
-HASH_XML_PY_NO_MANIFEST_OR_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '^.*\.xml$\|^.*\.py$' | grep -v '__.*__.py$' | sort | md5sum)
-HASH_MANIFEST_AND_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '__.*__.py$' | sort | md5sum)
-HASH_OTHERS=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep -v '.*\.xml$\|.*\.py$' | sort | md5sum)
-trace "HASH_XML_PY_NO_MANIFEST_OR_INIT_PY  = [$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY]."
-trace "HASH_MANIFEST_AND_INIT_PY           = [$HASH_MANIFEST_AND_INIT_PY]"
-trace "HASH_OTHERS                         = [$HASH_OTHERS]"
+HASH=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
+trace "HASH = [$HASH]."
 
 trace "(Re)starting the odoo server to run the module."
 docker start $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
@@ -341,29 +332,17 @@ trace "Starting tailing of docker log in background."
 docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
 
 trace "Waiting for a change to occur in files that need a restart."
-HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY="$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY"
-HASH2_MANIFEST_AND_INIT_PY="$HASH_MANIFEST_AND_INIT_PY"
-HASH2_OTHERS="$HASH_OTHERS"
+HASH2="$HASH"
 
 while true; do
-	if [ "$HASH_MANIFEST_AND_INIT_PY" != "$HASH2_MANIFEST_AND_INIT_PY" ] || [ "$HASH_OTHERS" != "$HASH2_OTHERS" ]; then
+	if [ "$HASH" != "$HASH2" ]; then
 		restart_server
-	elif [ "$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY" != "$HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY" ]; then
-		if [ "$ALWAYS_RESTART" -eq 0 ]; then
-			trace "Change detected in a .xml or .py file (other than __MANIFEST.py and __INIT__.py)."
-			trace "Not doing anything as odoo-bin will handle it due to --dev xml,reload."
-		else
-			restart_server
-		fi
+		HASH="$HASH2"
 	fi
 
 	inotifywait -r -q "$MODULE" >>$TRACE 2>&1
 	trace "Re-calculating HASH2 values."
-	HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '^.*\.xml$\|^.*\.py$' | grep -v '__.*__.py$' | sort | md5sum)
-	HASH2_MANIFEST_AND_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '__.*__.py$' | sort | md5sum)
-	HASH2_OTHERS=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep -v '.*\.xml$\|.*\.py$' | sort | md5sum)
+	HASH2=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
 
-	trace "HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY = [$HASH2_XML_PY_NO_MANIFEST_OR_INIT_PY]."
-	trace "HASH2_MANIFEST_AND_INIT_PY          = [$HASH2_MANIFEST_AND_INIT_PY]"
-	trace "HASH2_OTHERS                        = [$HASH2_OTHERS]"
+	trace "HASH2 = [$HASH2]."
 done
