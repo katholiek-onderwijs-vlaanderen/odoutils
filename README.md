@@ -25,8 +25,8 @@ Place them in your location of choice, and make them executable:
 $ cd ~
 $ mkdir odoutils
 $ cd odoutils
-$ wget https://github.com/dimitrydhondt/odoutils/blob/main/odounit.sh
-$ wget https://github.com/dimitrydhondt/odoutils/blob/main/odorun.sh
+$ wget https://raw.githubusercontent.com/dimitrydhondt/odoutils/main/odounit.sh -O odounit.sh
+$ wget https://raw.githubusercontent.com/dimitrydhondt/odoutils/main/odorun.sh -O odorun.sh
 $ chmod u+x odounit.sh
 $ chmod u+x odorun.sh
 ``` 

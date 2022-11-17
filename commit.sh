@@ -1,4 +1,6 @@
 #!/bin/bash
+eval $(ssh-agent)
+ssh-add ~/.ssh/id_ed25519
 git status
 read -p "Commit all these changes? (y/n) " yn
 
