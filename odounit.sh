@@ -59,7 +59,7 @@ function please_install {
 	echo "This script requires these command to run:"
 	echo
 	echo " - figlet"
-	echo " - tput (from package ncruses-bin)"
+	echo " - tput (from package ncurses-bin)"
 	echo " - docker (from docker.io)"
 	echo " - inotifywait (from inotify-tools)."
 	echo
@@ -446,6 +446,7 @@ if [ "$ONCE" -eq 0 ]; then
 			inotifywait -r -q "$MODULE" >>$TRACE 2>&1
 			hash2=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
 			trace "Calculated hash of the folder after inotifywait: $hash2"
+			trace "Watching [$(pwd)/$MODULE]"
 		done
 	done
 else
