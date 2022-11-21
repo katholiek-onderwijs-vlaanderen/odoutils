@@ -105,7 +105,7 @@ Delete all containers and log files (by default containers are created and then 
 
 `./odorun.sh` is a module runner for development. It allows you to fire up a fresh odoo container with a single command. It is designed to take care of module reloading, upgrading, etc.. Simply fire it up, develop your module, and then check result by hitting the refresh button on your browser. 
 
-The script uses docker containers to isolate the entire process of running the tests from the rest of your system.
+The script uses docker containers to isolate the entire process of running the odoo database and web server from the rest of your system.
 
 ![odoorun console output](/docs/odorun-console.png)
 
