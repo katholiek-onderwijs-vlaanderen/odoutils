@@ -13,7 +13,7 @@ More specifically 3 items are created (in this order of dependency):
 * A postgres container.
 * An odoo container.
 
-The necessary command line arguments for odoo-bin are passed in at creation time of the containers. More specifically: `-i` and `-u` to install and upgrade the module, as well as `--dev xml,reload` to trigger reading of xml files from disk rather than database, and to trigger reloading of changes to python files.
+The necessary command line arguments for odoo-bin are passed in at creation time of the containers. More specifically: `-i` and `-u` to install and upgrade the module.
 
 The odoo container is stopped when the user presses CTRL-C (but not removed, it is re-used next time the tests are run).
 
@@ -23,7 +23,7 @@ The *current folder* where you run `odorun.sh` is mapped as `/mnt/extra-addons` 
 
 ## Scope for a network+containers set.
 
-Since the command to run odoo has to *include* (at creation time) the name of the module and docker containers are *immutable*, we create a new network and pg+odoo containers for any combination of values for these 3 parameters:
+Since the command to run odoo has to *include* (at creation time) the name of the module and docker containers are *immutable*, we create a new network and pg+odoo containers for any combination of values for these parameters:
 
 * port number
 * module name
@@ -34,15 +34,9 @@ An md5hash is generated for each combination of those input parameters, and is a
 
 ## Detecting file changes
 
-When only changes to xml or python files that already existed when the odoo server was started, then nothing is done. We rely on --dev xml,reload to handle those cases properly.
+Detecting file changes is done in the same way as for `odounit.sh`, as [described here](/docs/TECH_OVERVIEW_ODOUNIT.md).
 
-If, on the other hand:
-
-* a change to any other file was detected,
-* a new file is detected, 
-* or if a file was deleted, 
-
-then the full docker container and database container is destroyed, and recreated from scratch. This will reinstall the module under development.
+When a file change was detected. The odoo server is restarted and the module is re-installed.
 
 This way the odoo server is always in a reliable state. Reliable enough for the user to not have to worry about server restarts any more :).
 
