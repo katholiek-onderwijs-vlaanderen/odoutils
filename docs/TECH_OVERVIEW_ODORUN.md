@@ -56,4 +56,4 @@ The code of the module logs a verbose trace in `/tmp/odoutils-trace.log`. Tail i
 
 ## Unit tests
 
-A suite of test scripts is located in `tests` and can be run using `test-odorun.sh`. The test suite uses [shunit2](https://github.com/kward/shunit2./com) as xUnit testing framework.
+A suite of test scripts is located in `tests` and can be run using `test-odorun.sh`. The test suite uses [shunit2](https://github.com/kward/shunit2) as xUnit testing framework.
