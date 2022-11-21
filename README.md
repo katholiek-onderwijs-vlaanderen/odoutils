@@ -89,7 +89,7 @@ Run the test suite of module 'my_module' in a loop and show full color output:
 Run the test suite for module 'my_module' once and output in plain text, then check if failures were detected:
 
 `$ ./odounit.sh -p -o my_module`<br>
-`$ [ $? -eq 1 ] && echo "At least one test failed."`
+`$ [ $? -ne 0 ] && echo "At least one test failed, or module did not install."`
 
 Open a second terminal session, while ./odounit.sh is running, and inspect the tail of the odoo log:
 
