@@ -119,6 +119,7 @@ The script uses docker containers to isolate the entire process of running the o
 | `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the module next time.<br/> The exit code is 0, also when nothing was deleted. |
 | `-v`   | Displays the script version number. |
 
+At the moment the postgres port is exposed on port 5433. Will make this an option in the future.
 
 ### Examples:
 
