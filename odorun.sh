@@ -187,11 +187,6 @@ trace "Starting parse of command line."
 while getopts "adg:hp:rv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
-	a)
-		trace "-a detected. Setting ALWAY_RESTART=1"
-		ALWAYS_RESTART=1
-		;;
-
 	d)
 		touch "$TRACE"
 		tail -f "$TRACE"

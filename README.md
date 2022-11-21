@@ -113,7 +113,6 @@ The script uses docker containers to isolate the entire process of running the o
 
 | Option | Description |
 | ------ | ----------- |
-| `-a`   | Always restart the server, on any file modification. (Do not rely on --web xml,reload) |
 | `-g`   | Select the odoo version you want run the module on. Tested with odoo 14, 15 and 16.<br/> Depending on the odoo version, a fitting postgres image will be used for the database container. The pg version used is the one advised in the odoo [developer's documentation](https://www.odoo.com/documentation/master/administration/install/install.html#postgresql). Default: 15 |
 | `-h`   | Displays a help message. |
 | `-p`   | Set the HTTP port to run the odoo server on. Default: 8069. |
