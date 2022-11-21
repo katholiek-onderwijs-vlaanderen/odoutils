@@ -4,8 +4,7 @@ MUST
 
 - [ ] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
-- [ ] Add pgadmin to odorun.sh.
-- [ ] Add smtp4dev to odorun.sh.
+- [ ] Add smtp4dev to odorun.sh to catch all mails, yet have a functional mail server - and allow for inspecting mails in dev mode.
 
 SHOULD
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
@@ -59,3 +58,4 @@ REJECTED
 
 - [ ] Make postgres port dynamic. 
 - [ ] Add parameter to allow specifying the version of postgres to use. (will require refactoring options handling)
+- [ ] Add pgadmin to odorun.sh.
