@@ -52,7 +52,7 @@ The [source of the module](/odounit.sh) starts by documenting all variables used
 
 ## Tracing & Debugging
 
-The code of the module logs a verbose trace in `/tmp/odorun-trace.log`. Tail it for debugging.
+The code of the module logs a verbose trace in `/tmp/odoutils-trace.log`. Tail it for debugging.
 
 ## Unit tests
 
