@@ -107,6 +107,8 @@ Delete all containers and log files (by default containers are created and then 
 
 The script uses docker containers to isolate the entire process of running the tests from the rest of your system.
 
+![odoorun console output](/docs/odorun-console.png)
+
 ### Options:
 
 | Option | Description |
