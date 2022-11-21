@@ -135,7 +135,7 @@ Run `my_module` on port 9090:
 
 `$ ./odorun.sh -p 9090 my_module`
 
-# Contributing
+# Contributing & Technical Documentation
 
 A *high-level overview* of the technical design for `odounit.sh` is [described here](/docs/TECH_OVERVIEW_ODOUNIT.md).
 For `odorun.sh` the high-level technical documentation is [located here](/docs/TECH_OVERVIEW_ODORUN.md).
