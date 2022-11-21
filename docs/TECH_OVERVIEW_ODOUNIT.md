@@ -36,11 +36,11 @@ An md5hash is generated for each combination of those 3 input parameters, and is
 
 ## Detecting file changes
 
-To detect a change in the files of the module the user is testing, a combination of checking th e filesystem and `inotifywait` is used.
+To detect a change in the files of the module the user is testing, a combination of checking the filesystem and `inotifywait` is used.
 
 More precisely:
 
-1) When a test run starts we calculate a hash for the entire module using `$(find "$MODULE" -type f -exec ls -l {} + | sort | md5sum)`<br/>
+1) When a test run starts we calculate a hash for the entire module using `$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)`<br/>
 When a file is modified, it's timestamp will be updated, resulting in a different hash value because `ls -l` includes the timestamp.<br/>
 When a file is removed or added, the hash will also change, as find will now have more or fewer lines.
 2) We then run the tests and parse the output of the odoo docker.
@@ -53,7 +53,7 @@ The [source of the module](/odounit.sh) starts by documenting all variables used
 
 ## Tracing & Debugging
 
-The code of the module logs a verbose trace in `/tmp/odounit-trace.log`. Tail it for debugging.
+The code of the module logs a verbose trace in `/tmp/odoutils-trace.log`. Tail it for debugging.
 
 ## Unit tests
 
