@@ -13,6 +13,7 @@ SHOULD
 
 COULD
 - [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
+- [ ] Check that reloading the browser on windows/linux can also be automated :-)
 
 WILL NOT
 
