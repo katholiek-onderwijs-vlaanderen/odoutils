@@ -8,7 +8,6 @@ MUST
 
 SHOULD
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
-- [ ] Add -b for setting a data_b_ase port - so you can point pgadmin at it :)
 - [ ] Add -m for setting the http port for the smtp4dev _m_ail server.
 
 COULD
@@ -19,6 +18,7 @@ WILL NOT
 
 DONE:
 
+- [x] Add -b for setting a data_b_ase port - so you can point pgadmin at it :)
 - [x] add -d (debug) flag to trace scripts for debugging.
 - [x] Add documentation for odorun.sh
 - [x] Add -a (always) flag to odorun.sh for those that don't trust --web xml,reload. 
