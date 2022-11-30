@@ -101,7 +101,7 @@ Delete all containers and log files (by default containers are created and then 
 
 ## odorun.sh
 
-`Usage: ./odorun.sh [-h | -r] [-o] [-g] [odoo_module_name]`
+`Usage: ./odorun.sh [-h | -r] [-b] [-p] [-o] [-g] [odoo_module_name]`
 
 `./odorun.sh` is a module runner for development. It allows you to fire up a fresh odoo container with a single command. It is designed to take care of module reloading, upgrading, etc.. Simply fire it up, develop your module, and then check result by hitting the refresh button on your browser. Restarts the odoo server and re-installs the module whenever a file was changed in your module's folder.
 
@@ -113,6 +113,7 @@ The script uses docker containers to isolate the entire process of running the o
 
 | Option | Description |
 | ------ | ----------- |
+| `-b`   | Sets the port on which the postgres server will be reachable. Default: not exposed. |
 | `-g`   | Select the odoo version you want run the module on. Tested with odoo 14, 15 and 16.<br/> Depending on the odoo version, a fitting postgres image will be used for the database container. The pg version used is the one advised in the odoo [developer's documentation](https://www.odoo.com/documentation/master/administration/install/install.html#postgresql). Default: 15 |
 | `-h`   | Displays a help message. |
 | `-p`   | Set the HTTP port to run the odoo server on. Default: 8069. |
