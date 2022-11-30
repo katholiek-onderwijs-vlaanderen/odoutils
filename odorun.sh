@@ -29,6 +29,10 @@ DOCKER_PG_IMAGE_NAME=postgres:10
 # Can be overridden using the -p flag.
 PORT=8069
 
+# On what port should the postgres server be exposed?
+# Can be set using the -b flag.
+PG_PORT=
+
 function trace() {
 	echo "$1" >>"$TRACE" 2>&1
 }
@@ -63,6 +67,8 @@ function help_message {
 	echo
 	echo "Options:"
 	echo
+  echo "    -b    Sets the port on which the postgres server will be reachable. Default: not exposed."
+  echo
 	echo "    -g    Selects the odoo version to run. Tested with: 14,15 and 16. Default: 15."
 	echo
 	echo "    -h    Displays this help message."
@@ -137,13 +143,6 @@ function restart_server {
 	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
 	trace "Timestamp when we are restarting: $timestamp"
 
-	HASH_XML_PY_NO_MANIFEST_OR_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '^.*\.xml$\|^.*\.py$' | grep -v '__.*__.py$' | sort | md5sum)
-	HASH_MANIFEST_AND_INIT_PY=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep '__.*__.py$' | sort | md5sum)
-	HASH_OTHERS=$(find "$MODULE" -type f -exec ls -l --full-time {} + | grep -v '.*\.xml$\|.*\.py$' | sort | md5sum)
-	trace "Hash for all .xml and .py files, excluding __init__.py and __manifest__.py files : [$HASH_XML_PY_NO_MANIFEST_OR_INIT_PY]."
-	trace "Hash for all __init__.py and __manifest__.py files:                                [$HASH_MANIFEST_AND_INIT_PY]"
-	trace "Hash for all other files:                                                          [$HASH_OTHERS]"
-
 	trace "(Re)starting the odoo server to run the module."
 	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
 
@@ -184,9 +183,13 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "adg:hp:rv" opt; do
+while getopts "b:dg:hp:rv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
+  b)
+    PG_PORT=$OPTARG
+    ;;
+
 	d)
 		touch "$TRACE"
 		tail -f "$TRACE"
@@ -273,7 +276,7 @@ trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
 trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
-DOCKER_HASH=$(echo "$PORT" "$MODULE" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
+DOCKER_HASH=$(echo "$PG_PORT" "$PORT" "$MODULE" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
 
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
 DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
@@ -295,8 +298,10 @@ fi
 trace "Checking if the postgres docker [$DOCKER_PG_FULL_NAME] exists."
 if [ $(docker ps -a | grep "$DOCKER_PG_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating a postgres server.docker "
+  PG_PART_OPTION=""
+  [ "$PG_PORT" != "" ] && PG_PORT_OPTION="-p $PG_PORT:5432"
  # create -p 5433:5432 -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_FULL_NAME" --name "$DOCKER_PG_FULL_NAME" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
-	docker create -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_FULL_NAME" --name "$DOCKER_PG_FULL_NAME" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
+	docker create $PG_PORT_OPTION -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_FULL_NAME" --name "$DOCKER_PG_FULL_NAME" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
 else
 	trace "Docker $DOCKER_PG_FULL_NAME still exists, re-using it."
 fi
