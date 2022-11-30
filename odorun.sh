@@ -298,7 +298,7 @@ fi
 trace "Checking if the postgres docker [$DOCKER_PG_FULL_NAME] exists."
 if [ $(docker ps -a | grep "$DOCKER_PG_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating a postgres server.docker "
-  PG_PART_OPTION=""
+  PG_PORT_OPTION=""
   [ "$PG_PORT" != "" ] && PG_PORT_OPTION="-p $PG_PORT:5432"
  # create -p 5433:5432 -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_FULL_NAME" --name "$DOCKER_PG_FULL_NAME" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
 	docker create $PG_PORT_OPTION -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo -e POSTGRES_DB=postgres --network "$DOCKER_NETWORK_FULL_NAME" --name "$DOCKER_PG_FULL_NAME" "$DOCKER_PG_IMAGE_NAME" >>$TRACE 2>&1
