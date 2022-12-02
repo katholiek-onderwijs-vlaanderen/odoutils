@@ -51,7 +51,6 @@ function ctrl_c_once() {
 
 function ctrl_c() {
 	echo $(tput sgr 0)
-	clear
 	ctrl_c_once
 }
 
@@ -133,6 +132,28 @@ function help_message {
 	echo "$ $0 -r"
 }
 
+# Output big text with figlet
+# Fixes issue with background color sequence not getting applied correctly.
+# First clear to end of line for 6 line, then re-positiotn cursor back up, then output figlet.
+# $1 message to display
+function big_text {
+  if [ "$PLAIN" -eq 0 ]; then
+    echo "$(tput el)"
+    echo "$(tput el)"
+    echo "$(tput el)"
+    echo "$(tput el)"
+    echo "$(tput el)"
+    echo "$(tput el)"
+    echo -n "$(tput cuu1)"
+    echo -n "$(tput cuu1)"
+    echo -n "$(tput cuu1)"
+    echo -n "$(tput cuu1)"
+    echo -n "$(tput cuu1)"
+    echo -n "$(tput cuu1)"
+  fi
+  figlet -t -c "$1"
+}
+
 function delete_containers {
 	if [ $(docker ps -a | grep "$DOCKER_ODOO" | wc -l) -gt 0 ]; then
 		trace "Deleting all odoo containers."
@@ -167,7 +188,7 @@ function run_tests {
 
 	trace "(Re)starting the odoo server to run the test suite."
 	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
-	docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME 2>$LOG
+	docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
 	trace "Server finisfed running the odoo test suite."
 
 	if [ $(cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | wc -l) -ne 0 ]; then
@@ -175,12 +196,10 @@ function run_tests {
 
 		if [ "$PLAIN" -eq 0 ]; then
 			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 1)"
-			clear
 		fi
 
 		trace "Displaying FAILED message."
-		figlet -c -t "FAILED!" 2>>$TRACE
-		echo
+    big_text "FAILED!"
 
 		trace "Displaying list of failed tests."
 
@@ -190,22 +209,12 @@ function run_tests {
 			echo "These tests failed:"
 		fi
 		cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | sed 's/.*FAIL: //g' | cut -c -$(tput cols)
-		echo
 
 		error_count=$(cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | wc -l)
 		trace "Counted $error_count errors in the odoo logs."
 
-		lines=$(expr $(tput lines) - 11 - $error_count)
-		trace "Number of lines to tail on the rest of the screen: $lines"
+		[ "$PLAIN" -eq 0 ] && echo "$(tput sgr0)"
 
-		trace "Logging stack traces of failures from logs."
-		if [ "$PLAIN" -eq 0 ]; then
-			echo "$(tput smso)Traces of the first failures:$(tput rmso)"
-		else
-			echo "Traces of the first failures:"
-		fi
-		cat "$LOG" | sed -n '/.*FAIL: /,/.*INFO /p' | head -n $lines | cut -c -$(tput cols)
-		trace "Finished logging of stack traces for failures."
 	elif [ $(cat $LOG | grep '.* ERROR odoo .*' | wc -l) -ne 0 ]; then
 		LAST_RUN_FAILED=2
 
@@ -213,45 +222,23 @@ function run_tests {
 
 		if [ "$PLAIN" -eq 0 ]; then
 			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 4)"
-			clear
 		fi
 
-		figlet -c -t "Unknown" 2>>$TRACE
-		echo
+    big_text "Unknown"
 
-		lines=$(expr $(tput lines) - 9)
-		trace "Number of lines to tail on the rest of the screen: $lines"
+		[ "$PLAIN" -eq 0 ] && echo "$(tput sgr0)"
 
-		trace "Showing tail of odoo log on screen."
-
-		if [ "$PLAIN" -eq 0 ]; then
-			echo "$(tput smso)Tail of logs:$(tput rmso)"
-		else
-			echo "Tail of logs:"
-		fi
-
-		tail -n $lines "$LOG" | cut -c -$(tput cols)
 	else
 		LAST_RUN_FAILED=0
 		if [ "$PLAIN" -eq 0 ]; then
 			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 2)"
-			clear
 		fi
 
 		trace "Displaying SUCCESS message."
-		figlet -c -t "Success" 2>>$TRACE
-		echo
+    big_text "Success"
 
-		lines=$(expr $(tput lines) - 9)
-		trace "Number of lines to tail on the rest of the screen: $lines"
+		[ "$PLAIN" -eq 0 ] && echo "$(tput sgr0)"
 
-		echo "Showing tail of odoo log on screen." >>$TRACE
-		if [ "$PLAIN" -eq 0 ]; then
-			echo "$(tput smso)Tail of logs:$(tput rmso)"
-		else
-			echo "Tail of logs:"
-		fi
-		tail -n $lines "$LOG" | cut -c -$(tput cols)
 	fi
 	trace "run_tests ended."
 }

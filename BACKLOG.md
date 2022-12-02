@@ -9,6 +9,7 @@ MUST
 SHOULD
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
 - [ ] Add -m for setting the http port for the smtp4dev _m_ail server.
+- [ ] Stop pg container on CTRL-C (otherwise it keeps running - not stop after test run - for speed)
 
 COULD
 - [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
