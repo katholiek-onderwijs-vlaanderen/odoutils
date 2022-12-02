@@ -150,8 +150,10 @@ function big_text {
     echo -n "$(tput cuu1)"
     echo -n "$(tput cuu1)"
     echo -n "$(tput cuu1)"
+    figlet -t -c "$1"
+  else
+    echo "$1"
   fi
-  figlet -t -c "$1"
 }
 
 function delete_containers {
