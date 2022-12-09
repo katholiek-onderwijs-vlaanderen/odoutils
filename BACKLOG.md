@@ -2,6 +2,7 @@ TO DO:
 
 MUST
 
+- [ ] add -a option to auto-install dependencies in automation context.
 - [ ] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
 - [ ] Add smtp4dev to odorun.sh to catch all mails, yet have a functional mail server - and allow for inspecting mails in dev mode.
@@ -19,6 +20,7 @@ WILL NOT
 
 DONE:
 
+- [x] add -i support for installing additional modules as dependencies
 - [x] Add -b for setting a data_b_ase port - so you can point pgadmin at it :)
 - [x] add -d (debug) flag to trace scripts for debugging.
 - [x] Add documentation for odorun.sh
