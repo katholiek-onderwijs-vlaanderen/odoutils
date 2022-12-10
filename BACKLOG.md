@@ -2,6 +2,7 @@ TO DO:
 
 MUST
 
+- [ ] Find a way to control the order of installation of modules, if we are to put test data in a separate module..
 - [ ] add -a option to auto-install dependencies in automation context.
 - [ ] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
