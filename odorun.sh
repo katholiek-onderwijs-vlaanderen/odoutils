@@ -33,9 +33,6 @@ PORT=8069
 # Can be set using the -b flag.
 PG_PORT=
 
-# What additional modules should be installed? This option is set using -i xxxx
-ADDITIONAL_MODULES=
-
 function trace() {
 	echo "$1" >>"$TRACE" 2>&1
 }
@@ -76,8 +73,6 @@ function help_message {
 	echo
 	echo "    -h    Displays this help message."
 	echo
-  echo "    -i    Install one or more additional modules from the current folder. Comma separated list."
-  echo
 	echo "    -p    Sets the port on which the odoo server will be reachable. Default: 8069."
 	echo
 	echo "    -r    Delete the database and odoo containers, as well as the bridge network between them."
@@ -159,25 +154,6 @@ function restart_server {
 
 }
 
-# Calculate a comma seperated list of modules for -i and -u on odoo command line
-#
-# $1 module to run tests for
-# $2 comma-seperated list of modules to install additionaly
-function calculate_all_modules {
-  trace "Determining full list of modules:"
-  trace "1 == ${1}"
-  trace "2 == ${2+x}"
-
-  if [ -z "${2+x}" ]; then
-    RET="${1}"
-  else
-    RET="${2},${1}"
-  fi
-
-  trace "Returning: $RET"
-  echo "$RET"
-}
-
 trace "----- Script STARTING -----"
 
 # Check if all dependencies are installed..
@@ -210,7 +186,7 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "b:dg:hi:p:rv" opt; do
+while getopts "b:dg:hp:rv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
   b)
@@ -246,12 +222,6 @@ while getopts "b:dg:hi:p:rv" opt; do
 		echo
 		exit 0
 		;;
-
-  i)
-		trace "-i detected."
-		ADDITIONAL_MODULES=$OPTARG
-    trace "Will install these additional modules: $ADDITIONAL_MODULES"
-    ;;
 
 	p)
 		trace "-p detected."
@@ -309,7 +279,7 @@ trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
 trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
-DOCKER_HASH=$(echo "$PG_PORT" "$PORT" "$MODULE" "$ADDITIONAL_MODULES" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
+DOCKER_HASH=$(echo "$PG_PORT" "$PORT" "$MODULE" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
 
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
 DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
@@ -341,9 +311,7 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-  ALL_MODULES=$(calculate_all_modules "$MODULE" "$ADDITIONAL_MODULES")
-  echo "all modules to install: $ALL_MODULES"
-	docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$ALL_MODULES" -i "$ALL_MODULES" -l en_US --without-demo all >>$TRACE 2>&1
+	docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" S-l en_US --without-demo all >>$TRACE 2>&1
 else
 	trace "Docker $DOCKER_ODOO_FULL_NAME still exists, re-using it."
 fi

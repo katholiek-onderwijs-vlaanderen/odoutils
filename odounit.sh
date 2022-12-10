@@ -33,9 +33,6 @@ ONCE=0
 # PLAIN=1 -> Do not clear the screen, and do not use ANSI escape codes to add colors to the output.
 PLAIN=0
 
-# What additional modules should be installed? This option is set using -i xxxx
-ADDITIONAL_MODULES=
-
 # Did the last run of the test suite fail? 0: All tests passed, 1: At least one test failed, 2: Some other (unknown error) occured.
 # -1 if test suite was not yet run.
 LAST_RUN_FAILED=-1
@@ -78,7 +75,7 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [odoo_module_name]"
+	echo "Usage: $0 [-h | -t | -r] [-i modules_to_install] [-p] [-o] [-g] module_to_test"
 }
 
 function help_message {
@@ -97,8 +94,8 @@ function help_message {
 	echo
 	echo "    -h    Displays this help message."
 	echo
-  echo "    -i    Install one or more additional modules from the current folder. Comma separated list."
-  echo "          The additional modules will be installed before the tests are run."
+  echo "    -i    Module(s) to install. Comma separated list."
+  echo "          If no module is given, the [module_to_test] on the command line will be installed."
   echo
 	echo "    -o    Run test suite once. Do not enter loop to re-run test suite on file change."
 	echo
@@ -251,25 +248,6 @@ function run_tests {
 	trace "run_tests ended."
 }
 
-# Calculate a comma seperated list of modules for -i and -u on odoo command line
-#
-# $1 module to run tests for
-# $2 comma-seperated list of modules to install additionaly
-function calculate_all_modules {
-  trace "Determining full list of modules:"
-  trace "1 == ${1}"
-  trace "2 == ${2+x}"
-
-  if [ -z "${2+x}" ]; then
-    RET="${1}"
-  else
-    RET="${2},${1}"
-  fi
-
-  trace "Returning: $RET"
-  echo "$RET"
-}
-
 trace "*** Script starting..."
 
 # Check if all dependencies are installed..
@@ -341,8 +319,8 @@ while getopts "dg:hi:oprtv" opt; do
 
   i)
 		trace "-i detected."
-		ADDITIONAL_MODULES=$OPTARG
-    trace "Will install these additional modules: $ADDITIONAL_MODULES"
+		MODULES_TO_INSTALL=$OPTARG
+    trace "Will install these additional modules: $MODULES_TO_INSTALL"
     ;;
     
 	o)
@@ -386,7 +364,7 @@ trace "Command line = [$@]."
 shift $(($OPTIND - 1))
 
 # Check that the user specified a module to test.
-if [ -z ${1+x} ]; then
+if [ -z "${1+x}" ]; then
 	echo "No module to test was specified."
 	echo
 	usage_message
@@ -402,6 +380,14 @@ if [ ! -d "$MODULE" ]; then
 	echo "Please specify a valid odoo module."
 	exit 2
 fi
+
+if [ -z "${MODULES_TO_INSTALL+x}" ]; then
+  MODULES_TO_INSTALL="$MODULE"
+fi
+
+echo "Module [$MODULES_TO_INSTALL] will be installed."
+echo "Tests for [$MODULE] will be run."
+
 trace "Finished parsing of command line."
 
 # Log all variables for debugging purposes.
@@ -410,7 +396,7 @@ trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
 trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
-DOCKER_HASH=$(echo "$MODULE" "$ADDITIONAL_MODULES" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
+DOCKER_HASH=$(echo "$MODULE" "$MODULES_TO_INSTALL" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
 DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
 DOCKER_ODOO_FULL_NAME="$DOCKER_ODOO-$DOCKER_HASH"
@@ -441,9 +427,7 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-  ALL_MODULES=$(calculate_all_modules "$MODULE" "$ADDITIONAL_MODULES")
-  echo "all modules to install: $ALL_MODULES"
-	docker create -v $(pwd):/mnt/extra-addons --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$ALL_MODULES" -i "$ALL_MODULES" --stop-after-init --without-demo all --test-tags "/$MODULE" >>$TRACE 2>&1
+	docker create -v $(pwd):/mnt/extra-addons --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULES_TO_INSTALL" -i "$MODULES_TO_INSTALL" --stop-after-init --without-demo all --test-tags "/$MODULE" >>$TRACE 2>&1
 else
 	trace "Docker $DOCKER_ODOO_FULL_NAME still exists, re-using it."
 fi
