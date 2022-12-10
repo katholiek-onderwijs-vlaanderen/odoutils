@@ -63,6 +63,7 @@ It uses docker containers to isolate the entire process of running the tests fro
 | ------ | ----------- |
 | `-g`   | Select the odoo version you want the test suite to run on. Tested with odoo 14, 15 and 16.<br/> Depending on the odoo version, a fitting postgres image will be used for the database container. The pg version used is the one advised in the odoo [developer's documentation](https://www.odoo.com/documentation/master/administration/install/install.html#postgresql). |
 | `-h`   | Displays help message. |
+| `-i`   | Install one or more additional modules from the current folder. Comma separated list. |
 | `-o`   | Run test suite once. Do not enter loop to re-run test suite on file change. |
 | `-p`   | Do not output in color. Do not clear screen. |
 | `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the tests next time.<br/> The exit code is 0, also when nothing was deleted. |
