@@ -98,6 +98,7 @@ function help_message {
 	echo "    -h    Displays this help message."
 	echo
   echo "    -i    Install one or more additional modules from the current folder. Comma separated list."
+  echo "          The additional modules will be installed before the tests are run."
   echo
 	echo "    -o    Run test suite once. Do not enter loop to re-run test suite on file change."
 	echo
@@ -262,7 +263,7 @@ function calculate_all_modules {
   if [ -z "${2+x}" ]; then
     RET="${1}"
   else
-    RET="${1},${2}"
+    RET="${2},${1}"
   fi
 
   trace "Returning: $RET"

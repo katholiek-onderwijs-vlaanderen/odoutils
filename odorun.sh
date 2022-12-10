@@ -171,7 +171,7 @@ function calculate_all_modules {
   if [ -z "${2+x}" ]; then
     RET="${1}"
   else
-    RET="${1},${2}"
+    RET="${2},${1}"
   fi
 
   trace "Returning: $RET"
