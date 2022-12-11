@@ -80,9 +80,9 @@ function testRunWithOptionHelpOutputsHelp() {
 
 function testNoOptionsShowsUsage() {
     "$CMD" >"$CMD_LOG" 2>&1
-    echo "OUTPUT:"
-    cat "$CMD_LOG"
-    echo "---"
+    #echo "OUTPUT:"
+    #cat "$CMD_LOG"
+    #echo "---"
 
     assertNotEquals "Running without any parameters should output Usage." 0 $(cat $CMD_LOG | grep "Usage" | wc -l)
 }
