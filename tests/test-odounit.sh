@@ -116,7 +116,7 @@ function testOdoo14() {
 }
 
 function testOdoo16() {
-    trace "Trying to run tests on odoo 14."
+    trace "Trying to run tests on odoo 16."
     "$CMD" -o -p -g 16 module_without_failures >"$CMD_LOG" 2>&1
     RET=$?
 
@@ -129,6 +129,17 @@ function testTrailingSlashOnModuleName() {
     RET=$?
 
     assertEquals "Running on odoo 16 should exit with success code 0." 0 $RET
+}
+
+function testTwoModules() {
+    trace "Trying to run [module_without_failures] AND [module_without_failures2]. Should run both test suites."
+    "$CMD" -o -p module_without_failures module_without_failures2 >"$CMD_LOG" 2>&1
+    RET=$?
+
+    assertEquals "Running two modules without failure should exit with success code 0." 0 $RET
+    #cat $CMD_LOG
+    count=$(cat $CMD_LOG | grep "test_some_action_in_module_without_failures2" | wc -l)
+    assertEquals "Should have found start of test test_some_action_in_module_without_failures2" 1 $count
 }
 
 . shunit2

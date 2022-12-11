@@ -56,7 +56,7 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [-d] [odoo_module_name]"
+	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [-d] odoo_module_name1 odoo_module_name2"
 }
 
 function help_message {
@@ -99,8 +99,8 @@ function help_message {
 	echo "run the test suite of module 'my_module' on port 9090:"
 	echo "$ $0 -p 9090 my_module"
 	echo
-	echo "run the test suite of module 'my_module' and also install module 'dep':"
-	echo "$ $0 -i dep my_module"
+	echo "run the test suite of module 'my_module' and 'dep':"
+	echo "$ $0 my_module dep"
 	echo
 }
 

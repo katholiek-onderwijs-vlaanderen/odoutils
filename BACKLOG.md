@@ -2,7 +2,6 @@ TO DO:
 
 MUST
 
-- [ ] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
 - [ ] Add smtp4dev to odorun.sh to catch all mails, yet have a functional mail server - and allow for inspecting mails in dev mode.
 
@@ -12,15 +11,15 @@ SHOULD
 - [ ] Stop pg container on CTRL-C (otherwise it keeps running - not stop after test run - for speed)
 
 COULD
-- [ ] add -a option to auto-install dependencies in automation context?
-- [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
-- [ ] Check that reloading the browser on windows/linux can also be automated :-)
+- [ ] Check that reloading the browser on windows/linux can also be automated in odorun :-)
 
 WILL NOT
+- [ ] add -a option to auto-install dependencies in automation context?
+- [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
 
 DONE:
 
-- [x] Find a way to control the order of installation of modules, if we are to put test data in a separate module..
+- [x] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
 - [x] add -i support for installing additional modules as dependencies
 - [x] Add -b for setting a data_b_ase port - so you can point pgadmin at it :)
 - [x] add -d (debug) flag to trace scripts for debugging.
@@ -64,3 +63,4 @@ REJECTED
 - [ ] Make postgres port dynamic. 
 - [ ] Add parameter to allow specifying the version of postgres to use. (will require refactoring options handling)
 - [ ] Add pgadmin to odorun.sh.
+- [ ] Find a way to control the order of installation of modules, if we are to put test data in a separate module..

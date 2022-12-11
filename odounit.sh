@@ -75,7 +75,7 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-i modules_to_install] [-p] [-o] [-g] module_to_test"
+	echo "Usage: $0 [-h | -t | -r] [-i modules_to_install] [-p] [-o] [-g] module_to_test1 [module_to_test_2]"
 }
 
 function help_message {
@@ -94,9 +94,6 @@ function help_message {
 	echo
 	echo "    -h    Displays this help message."
 	echo
-  echo "    -i    Module(s) to install. Comma separated list."
-  echo "          If no module is given, the [module_to_test] on the command line will be installed."
-  echo
 	echo "    -o    Run test suite once. Do not enter loop to re-run test suite on file change."
 	echo
 	echo "    -p    Do not output in color. Do not clear screen."
@@ -133,6 +130,9 @@ function help_message {
 	echo
 	echo "Delete all containers and log files (by default containers are created and then reused for speed):"
 	echo "$ $0 -r"
+	echo
+  echo "Run test suite for module_A and module_B (both modules will be installed and tests for both will be run):"
+	echo "$ $0 module_A module_B"
 }
 
 # Output big text with figlet
@@ -248,6 +248,71 @@ function run_tests {
 	trace "run_tests ended."
 }
 
+# Check that $@ has one or more modules to test.
+# Also validate that these modules exist in the CWD (hcurrent working directory).
+# Will remove any trailing / as a convenience feature. Auto-completion in bash of a folder adds /.
+#
+# $@ the remaining command line arguments, after parsing (and thus removal of) flags and their arguments.
+#
+# echoes a comma-separated list of modules to install and test.
+function parse_cmd_line_arguments() {
+  RET=""
+
+  if [ $# -eq 0 ]; then
+    echo "No module to test was specified."
+    echo
+    usage_message
+    exit 2
+  fi
+  
+  trace "Parsing [" $# "] command line arguments."
+  for m in $@; do
+    trace "Removing any trailing / if present for ["$m"]"
+    m=$(echo "$m" | sed 's/\///g')
+
+    trace "Validating that ["$m"] is a valid directory in CWD."
+    if [ ! -d "$m" ]; then
+      echo "Module [$m] is not a folder in the current working directory [$(pwd)]."
+      echo
+      echo "Please specify a valid odoo module."
+      exit 2
+    fi
+
+    if [ -z "$RET" ]; then
+      RET="$m"
+    else
+      RET="${RET},${m}"
+    fi
+  done
+
+  trace "Generated comma-separated list of modules to install ["$RET"]"
+  echo "$RET"
+}
+
+# Takes a comma-seperated list of modules, and converts it into a set of test tags for odoo
+# e.g. modA,modB -> /modA,/modB
+#
+# $1 comma-seperated list of modules.
+#
+# echoes test tags back.
+function create_test_tags_from_modules() {
+  trace "Converting modules list ["$1"] into testing tags."
+  RET=""
+
+  modules=$(echo "$1" | sed "s/,/\n/g")
+  trace "Converted comma-separated into space-separated: ["$modules"]"
+  for module in $modules; do
+    if [ -z "$RET" ]; then
+      RET="/${module}"
+    else
+      RET="$RET,/${module}"
+    fi
+  done
+
+  trace "Final list of test tags: ["$RET"]"
+  echo "$RET"
+}
+
 trace "*** Script starting..."
 
 # Check if all dependencies are installed..
@@ -284,7 +349,7 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "dg:hi:oprtv" opt; do
+while getopts "dg:hoprtv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
 	d)
@@ -317,12 +382,6 @@ while getopts "dg:hi:oprtv" opt; do
 		exit 0
 		;;
 
-  i)
-		trace "-i detected."
-		MODULES_TO_INSTALL=$OPTARG
-    trace "Will install these additional modules: $MODULES_TO_INSTALL"
-    ;;
-    
 	o)
 		trace "-o detected."
 		ONCE=1
@@ -363,30 +422,13 @@ trace "Shifting arguments to find module name."
 trace "Command line = [$@]."
 shift $(($OPTIND - 1))
 
-# Check that the user specified a module to test.
-if [ -z "${1+x}" ]; then
-	echo "No module to test was specified."
-	echo
-	usage_message
-	exit 2
-fi
+# Parse command line argument, validate and convert into comma-separated list of modules to install and test.
+MODULES=$(parse_cmd_line_arguments $@)
 
-MODULE=$(echo "$1" | sed 's/\///g')
-trace "Module to test: [$MODULE]."
+# Convert list of modules into a set of odoo testing tags.
+TEST_TAGS=$(create_test_tags_from_modules "$MODULES")
 
-if [ ! -d "$MODULE" ]; then
-	echo "Module [$1] is not a folder in the current working directory [$(pwd)]."
-	echo
-	echo "Please specify a valid odoo module."
-	exit 2
-fi
-
-if [ -z "${MODULES_TO_INSTALL+x}" ]; then
-  MODULES_TO_INSTALL="$MODULE"
-fi
-
-echo "Module [$MODULES_TO_INSTALL] will be installed."
-echo "Tests for [$MODULE] will be run."
+echo "Tests for [$MODULES] will be run."
 
 trace "Finished parsing of command line."
 
@@ -396,7 +438,7 @@ trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
 trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
-DOCKER_HASH=$(echo "$MODULE" "$MODULES_TO_INSTALL" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
+DOCKER_HASH=$(echo "$MODULES" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
 DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
 DOCKER_ODOO_FULL_NAME="$DOCKER_ODOO-$DOCKER_HASH"
@@ -427,8 +469,9 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-	echo docker create -v $(pwd):/mnt/extra-addons --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULES_TO_INSTALL" -i "$MODULES_TO_INSTALL" --stop-after-init --without-demo all --test-tags "/$MODULE" 
-	docker create -v $(pwd):/mnt/extra-addons --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULES_TO_INSTALL" -i "$MODULES_TO_INSTALL" --stop-after-init --without-demo all --test-tags "/$MODULE" >>$TRACE 2>&1
+  command="docker create -v $(pwd):/mnt/extra-addons --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME $DOCKER_ODOO_IMAGE_NAME -d odoo -u $MODULES -i $MODULES --stop-after-init --without-demo all --test-tags $TEST_TAGS" 
+  echo "$command"
+	$command
 else
 	trace "Docker $DOCKER_ODOO_FULL_NAME still exists, re-using it."
 fi
@@ -442,19 +485,19 @@ if [ "$ONCE" -eq 0 ]; then
 	trap ctrl_c INT
 
 	while true; do
-		hash=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
+		hash=$(find "$MODULES" -type f -exec ls -l --full-time {} + | sort | md5sum)
 		trace "Calculated hash for the folder where we are running AT START OF CYCLE: $hash"
 
 		run_tests
 
 		trace "Calculating hash of the filer now."
-		hash2=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
+		hash2=$(find "$MODULES" -type f -exec ls -l --full-time {} + | sort | md5sum)
 		trace "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2"
 		while [ "$hash" = "$hash2" ]; do
-			inotifywait -r -q "$MODULE" >>$TRACE 2>&1
-			hash2=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
+			inotifywait -r -q "$MODULES" >>$TRACE 2>&1
+			hash2=$(find "$MODULES" -type f -exec ls -l --full-time {} + | sort | md5sum)
 			trace "Calculated hash of the folder after inotifywait: $hash2"
-			trace "Watching [$(pwd)/$MODULE]"
+			trace "Watching [$(pwd)/$MODULES]"
 		done
 	done
 else
