@@ -19,6 +19,7 @@ WILL NOT
 
 DONE:
 
+- [x] Fix error message when a module is not found in CWD. Add unit test in test suite. (parse_cmd_line function)
 - [x] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
 - [x] add -i support for installing additional modules as dependencies
 - [x] Add -b for setting a data_b_ase port - so you can point pgadmin at it :)

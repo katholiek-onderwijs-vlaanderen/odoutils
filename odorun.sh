@@ -56,14 +56,13 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [-d] odoo_module_name1 odoo_module_name2"
+	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [-d] odoo_module_name1 [odoo_module_name2]"
 }
 
 function help_message {
 	echo "$0 is utility to easily run odoo modules in a docker container."
 	echo "It uses docker containers to isolate the entire process of running the tests from the rest of your system."
-	echo "It supports running in dev mode where changes to xml and/or python source files are automatically "
-	echo "read / reloaded. No need for manually restarting the server."
+	echo "No need for manually restarting the server: the server will be restarted on file change."
 	echo
 	echo "Options:"
 	echo
@@ -87,20 +86,20 @@ function help_message {
 	echo
 	echo "Examples:"
 	echo
-	echo "Run the test suite of module 'my_module' in a loop and show full color output:"
+	echo "Run the module 'my_module' in a loop and show full color output:"
 	echo "$ $0 my_module"
 	echo
 	echo "Install/update my_module and run it from a set of docker container, on odoo 16:"
 	echo "$ $0 -g 16 my_module"
 	echo
-	echo "Run the test suite of module 'my_module' in a loop - restarting the service ANY time a file is updated."
+	echo "Run the module 'my_module' in a loop - restarting the service ANY time a file is updated."
 	echo "$ $0 -a my_module"
 	echo
-	echo "run the test suite of module 'my_module' on port 9090:"
+	echo "run the module 'my_module' on port 9090:"
 	echo "$ $0 -p 9090 my_module"
 	echo
-	echo "run the test suite of module 'my_module' and 'dep':"
-	echo "$ $0 my_module dep"
+	echo "install both 'my_module_A' and module 'my_module_B' and run the odoo server:"
+	echo "$ $0 my_module_A my_module_B"
 	echo
 }
 
@@ -152,6 +151,39 @@ function restart_server {
 	trace "Starting tailing of docker log in background."
 	docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
 
+}
+
+# Check that $@ has one or more modules to test.
+# Also validate that these modules exist in the CWD (hcurrent working directory).
+# Will remove any trailing / as a convenience feature. Auto-completion in bash of a folder adds /.
+#
+# $@ the remaining command line arguments, after parsing (and thus removal of) flags and their arguments.
+#
+# echoes a comma-separated list of modules to install and test.
+function parse_cmd_line_arguments() {
+  RET=""
+
+  trace "Parsing [" $# "] command line arguments."
+  for m in $@; do
+    trace "Removing any trailing / if present for ["$m"]"
+    m=$(echo "$m" | sed 's/\///g')
+
+    if [ -z "$RET" ]; then
+      RET="$m"
+    else
+      RET="${RET},${m}"
+    fi
+  done
+
+  trace "Generated comma-separated list of modules to install ["$RET"]"
+  echo "$RET"
+}
+
+# Function to calculate the hash of the watched files and folders for restarting.
+#
+# echoes back a hash value.
+function calculate_hash() {
+		echo $(find "$@" -type f -exec ls -l --full-time {} + | sort | md5sum)
 }
 
 trace "----- Script STARTING -----"
@@ -254,24 +286,30 @@ trace "Shifting arguments to find module name."
 trace "Command line = [$@]."
 shift $(($OPTIND - 1))
 
-# Check that the user specified a module to test.
-if [ -z ${1+x} ]; then
-	echo "No module to test was specified."
-	echo
-	usage_message
-	exit 2
+if [ $# -eq 0 ]; then
+  echo "No module to test was specified."
+  echo
+  usage_message
+  exit 2
 fi
 
-MODULE=$(echo "$1" | sed 's/\///g')
-trace "Module to install/update and run: [$MODULE]."
+for m in $@; do
+  trace "Removing any trailing / if present for ["$m"]"
+  m=$(echo "$m" | sed 's/\///g')
 
-if [ ! -d "$MODULE" ]; then
-	echo "Module [$1] is not a folder in the current working directory [$(pwd)]."
-	echo
-	echo "Please specify a valid odoo module."
-	exit 2
-fi
-trace "Finished parsing of command line."
+  trace "Validating that ["$m"] is a valid directory in CWD."
+  if [ ! -d "$m" ]; then
+    echo "ERROR: Module [$m] is not a folder in the current working directory [$(pwd)]."
+    echo
+    echo "Please specify a valid odoo module."
+    exit 2
+  fi
+done
+:
+# Parse command line argument, validate and convert into comma-separated list of modules to install and test.
+MODULES=$(parse_cmd_line_arguments $@)
+
+echo "Installing modules [$MODULES]"
 
 # Log all variables for debugging purposes.
 trace "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME"
@@ -279,7 +317,7 @@ trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
 trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
-DOCKER_HASH=$(echo "$PG_PORT" "$PORT" "$MODULE" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
+DOCKER_HASH=$(echo "$PG_PORT" "$PORT" "$MODULES" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
 
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
 DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
@@ -311,8 +349,9 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-	echo docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" S-l en_US --without-demo all 
-	docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name "$DOCKER_ODOO_FULL_NAME" --network "$DOCKER_NETWORK_FULL_NAME" -e HOST="$DOCKER_PG_FULL_NAME" "$DOCKER_ODOO_IMAGE_NAME" -d odoo -u "$MODULE" -i "$MODULE" S-l en_US --without-demo all >>$TRACE 2>&1
+	command="docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME $DOCKER_ODOO_IMAGE_NAME -d odoo -u $MODULES -i $MODULES S-l en_US --without-demo all" 
+  echo $command
+  $command >>$TRACE 2>&1
 else
 	trace "Docker $DOCKER_ODOO_FULL_NAME still exists, re-using it."
 fi
@@ -325,10 +364,8 @@ docker start $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
 trace "Timestamp when we are running: $timestamp"
 
-HASH=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
-trace "HASH = [$HASH]."
-
 trace "(Re)starting the odoo server to run the module."
+CURRENT_HASH=$(calculate_hash)
 docker start $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
 
 trap ctrl_c INT
@@ -336,17 +373,14 @@ trace "Starting tailing of docker log in background."
 docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
 
 trace "Waiting for a change to occur in files that need a restart."
-HASH2="$HASH"
 
 while true; do
-	if [ "$HASH" != "$HASH2" ]; then
-		restart_server
-		HASH="$HASH2"
-	fi
+  if [ "$(calculate_hash)" != "$CURRENT_HASH" ]; then
+    CURRENT_HASH=$(calculate_hash)
+    restart_server
+  fi
 
-	inotifywait -r -q "$MODULE" >>$TRACE 2>&1
-	trace "Re-calculating HASH2 values."
-	HASH2=$(find "$MODULE" -type f -exec ls -l --full-time {} + | sort | md5sum)
-
-	trace "HASH2 = [$HASH2]."
+  if [ "$(calculate_hash)" == "$CURRENT_HASH" ]; then
+    inotifywait -r -q -e modify,move,create,delete,attrib . 
+  fi
 done

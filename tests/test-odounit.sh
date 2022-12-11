@@ -146,4 +146,15 @@ function testTwoModules() {
     assertEquals "Should have found start of test test_some_action_in_module_without_failures2" 1 $count
 }
 
+function testNonExistingModule() {
+    trace "Trying to run [module_that_does_not_exist]. Should give error message in output."
+    "$CMD" -o -p module_that_does_not_exist >"$CMD_LOG" 2>&1
+    RET=$?
+
+    assertTrue "Running non-existing module should give exit code <> 0." "[ $RET -ne 0 ]"
+
+    count=$(cat $CMD_LOG | grep "ERROR" | wc -l)
+    assertEquals "Should give error message in output." 1 $count
+}
+
 . shunit2

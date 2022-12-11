@@ -263,14 +263,6 @@ function parse_cmd_line_arguments() {
     trace "Removing any trailing / if present for ["$m"]"
     m=$(echo "$m" | sed 's/\///g')
 
-    trace "Validating that ["$m"] is a valid directory in CWD."
-    if [ ! -d "$m" ]; then
-      echo "Module [$m] is not a folder in the current working directory [$(pwd)]."
-      echo
-      echo "Please specify a valid odoo module."
-      exit 2
-    fi
-
     if [ -z "$RET" ]; then
       RET="$m"
     else
@@ -428,6 +420,19 @@ if [ $# -eq 0 ]; then
   usage_message
   exit 2
 fi
+
+for m in $@; do
+  trace "Removing any trailing / if present for ["$m"]"
+  m=$(echo "$m" | sed 's/\///g')
+
+  trace "Validating that ["$m"] is a valid directory in CWD."
+  if [ ! -d "$m" ]; then
+    echo "ERROR: Module [$m] is not a folder in the current working directory [$(pwd)]."
+    echo
+    echo "Please specify a valid odoo module."
+    exit 2
+  fi
+done
 
 # Parse command line argument, validate and convert into comma-separated list of modules to install and test.
 MODULES=$(parse_cmd_line_arguments $@)
