@@ -3,7 +3,7 @@ OUTPUT=/tmp/loop-tests.log
 TIME=/tmp/loop-tests-time.log
 
 function calculate_hash {
-	echo $(find tests odorun.sh odounit.sh runtests.sh -type f -exec ls -l --full-time {} + | sort | md5sum)
+	echo $(find tests *.sh -type f -exec ls -l --full-time {} + | sort | md5sum)
 }
 
 # Output big text with figlet
