@@ -33,6 +33,7 @@ function testFailure() {
     trace "Testing for correct detection of failures. Executing test suite for module_with_failure."
     "$CMD" -p -o module_with_failures >$CMD_LOG
     RET=$?
+    #cat "$CMD_LOG"
     trace "Return value was [$RET]."
 
     trace "Checking return value was 0."
@@ -79,6 +80,9 @@ function testRunWithOptionHelpOutputsHelp() {
 
 function testNoOptionsShowsUsage() {
     "$CMD" >"$CMD_LOG" 2>&1
+    echo "OUTPUT:"
+    cat "$CMD_LOG"
+    echo "---"
 
     assertNotEquals "Running without any parameters should output Usage." 0 $(cat $CMD_LOG | grep "Usage" | wc -l)
 }

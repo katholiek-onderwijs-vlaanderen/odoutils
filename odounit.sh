@@ -258,13 +258,6 @@ function run_tests {
 function parse_cmd_line_arguments() {
   RET=""
 
-  if [ $# -eq 0 ]; then
-    echo "No module to test was specified."
-    echo
-    usage_message
-    exit 2
-  fi
-  
   trace "Parsing [" $# "] command line arguments."
   for m in $@; do
     trace "Removing any trailing / if present for ["$m"]"
@@ -421,6 +414,13 @@ done
 trace "Shifting arguments to find module name."
 trace "Command line = [$@]."
 shift $(($OPTIND - 1))
+
+if [ $# -eq 0 ]; then
+  echo "No module to test was specified."
+  echo
+  usage_message
+  exit 2
+fi
 
 # Parse command line argument, validate and convert into comma-separated list of modules to install and test.
 MODULES=$(parse_cmd_line_arguments $@)
