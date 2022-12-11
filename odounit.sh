@@ -306,6 +306,13 @@ function create_test_tags_from_modules() {
   echo "$RET"
 }
 
+# Function to calculate the hash of the watched files and folders for restarting.
+#
+# echoes back a hash value.
+function calculate_hash() {
+		echo $(find "$@" -type f -exec ls -l --full-time {} + | sort | md5sum)
+}
+
 trace "*** Script starting..."
 
 # Check if all dependencies are installed..
@@ -484,21 +491,18 @@ if [ "$ONCE" -eq 0 ]; then
 	# Set handling of CTRL-C to allow the user to stop the loop.
 	trap ctrl_c INT
 
+  CURRENT_HASH=$(calculate_hash)
+  run_tests
+
 	while true; do
-		hash=$(find "$MODULES" -type f -exec ls -l --full-time {} + | sort | md5sum)
-		trace "Calculated hash for the folder where we are running AT START OF CYCLE: $hash"
+    if [ "$(calculate_hash)" != "$CURRENT_HASH" ]; then
+      CURRENT_HASH=$(calculate_hash)
+      run_tests
+    fi
 
-		run_tests
-
-		trace "Calculating hash of the filer now."
-		hash2=$(find "$MODULES" -type f -exec ls -l --full-time {} + | sort | md5sum)
-		trace "Calculated hash of the folder where we are running AT END OF CYCLE: $hash2"
-		while [ "$hash" = "$hash2" ]; do
-			inotifywait -r -q "$MODULES" >>$TRACE 2>&1
-			hash2=$(find "$MODULES" -type f -exec ls -l --full-time {} + | sort | md5sum)
-			trace "Calculated hash of the folder after inotifywait: $hash2"
-			trace "Watching [$(pwd)/$MODULES]"
-		done
+    if [ "$(calculate_hash)" == "$CURRENT_HASH" ]; then
+			inotifywait -r -q -e modify,move,create,delete,attrib . 
+    fi
 	done
 else
 	# Set handling of CTRL-C to allow the user to stop the loop.
