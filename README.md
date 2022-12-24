@@ -101,6 +101,10 @@ Delete all containers and log files (by default containers are created and then 
 
 `$ ./odounit.sh -r`
 
+Run a single test (test isolation):
+
+`$ ./odounit.sh -t :class_name.test_name`
+
 ## odorun.sh
 
 `Usage: ./odorun.sh [-h | -r] [-b] [-p] [-o] [-g] [odoo_module_name]`

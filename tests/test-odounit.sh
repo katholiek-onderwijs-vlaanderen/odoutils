@@ -166,4 +166,15 @@ function testCustomTestTags() {
     count=$(cat $CMD_LOG | grep "Success" | wc -l)
     assertEquals "Should have completed with message [Success]" 1 $count
 }
+
+function testCustomTestTags2() {
+    trace "Trying to run [module_with_failures] AND --test-tags :test_test.test_some_action_1. Should run only 1 test and FAIL."
+    "$CMD" -o -p -t :test_test.test_some_action_1 module_with_failures >"$CMD_LOG" 2>&1
+    RET=$?
+
+    assertEquals "Running should exit with success code 1." 1 $RET
+    count=$(cat $CMD_LOG | grep "FAILED" | wc -l)
+    assertEquals "Should have completed with message [FAILED]" 1 $count
+}
+
 . shunit2

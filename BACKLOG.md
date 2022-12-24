@@ -19,6 +19,7 @@ WILL NOT
 
 DONE:
 
+- [»] Added -t option to allow test isolation.
 - [x] Added loop-tests.sh script.
 - [x] Fix error message when a module is not found in CWD. Add unit test in test suite. (parse_cmd_line function)
 - [x] Test fresh install on real ubuntu for odorun.sh AND odounit.sh .
