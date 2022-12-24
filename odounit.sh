@@ -101,6 +101,9 @@ function help_message {
 	echo "    -r    Delete the database and odoo containers, as well as the bridge network between them."
 	echo "          The containers and network will be re-created when you run the tests next time."
 	echo "          The exit code is 0, also when nothing was deleted."
+  echo 
+  echo "    -t    Specify the tests to run (default is all tests in all installed modules) manually. "
+  echo "          Uses the same syntax as --test-tags in odoo command line."
 	echo
 	echo "    -v    Displays the version of the script."
 	echo
