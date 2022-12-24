@@ -68,7 +68,7 @@ It uses docker containers to isolate the entire process of running the tests fro
 | `-o`   | Run test suite once. Do not enter loop to re-run test suite on file change. |
 | `-p`   | Do not output in color. Do not clear screen. |
 | `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the tests next time.<br/> The exit code is 0, also when nothing was deleted. |
-| `-t`   | Tails the output of the test run.<br/> You should start `./odounit.sh module_name` first, and issue `./odounit.sh -t` to view logs in a separate terminal session. |
+| `-t`   | Allow you to override the --test-tags with a custom value. Useful for test isolation. |
 | `-v`   | Displays the script version number. |
 
 

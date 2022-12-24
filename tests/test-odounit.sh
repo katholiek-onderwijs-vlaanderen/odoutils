@@ -157,4 +157,13 @@ function testNonExistingModule() {
     assertEquals "Should give error message in output." 1 $count
 }
 
+function testCustomTestTags() {
+    trace "Trying to run [module_with_failures] AND --test-tags :test_test.test_some_action_2. Should run only 1 test and PASS."
+    "$CMD" -o -p -t :test_test.test_some_action_2 module_with_failures >"$CMD_LOG" 2>&1
+    RET=$?
+
+    assertEquals "Running should exit with success code 0." 0 $RET
+    count=$(cat $CMD_LOG | grep "Success" | wc -l)
+    assertEquals "Should have completed with message [Success]" 1 $count
+}
 . shunit2

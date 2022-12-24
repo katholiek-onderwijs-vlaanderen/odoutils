@@ -102,9 +102,6 @@ function help_message {
 	echo "          The containers and network will be re-created when you run the tests next time."
 	echo "          The exit code is 0, also when nothing was deleted."
 	echo
-	echo "    -t    Tails the output of the test run."
-	echo "          You should start <$0 module_name> first, and issue $0 -t to view logs in a separate terminal session."
-	echo
 	echo "    -v    Displays the version of the script."
 	echo
 	echo
@@ -124,9 +121,6 @@ function help_message {
 	echo
 	echo "Run the test suite for module 'my_module' once and output in plain text:"
 	echo "$ $0 -p -o my_module"
-	echo
-	echo "Open a second terminal session, while $0 is running, and inspect the tail of the odoo log:"
-	echo "$ $0 -t"
 	echo
 	echo "Delete all containers and log files (by default containers are created and then reused for speed):"
 	echo "$ $0 -r"
@@ -341,7 +335,7 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "dg:hoprtv" opt; do
+while getopts "dg:hoprt:v" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
 	d)
@@ -394,13 +388,8 @@ while getopts "dg:hoprtv" opt; do
 		;;
 
 	t)
-		if [ -s $LOG ]; then
-			trace "-t detected. Starting tail -f on odoo container log."
-			tail -f $LOG
-		else
-			trace "-t detected, but no log file found. Showing tip to user."
-			echo "Please start $0 [module_name] first in a different console, then issue this command to tail the logs."
-		fi
+		TEST_TAGS=$OPTARG
+    trace "Will run with --test-tags $TEST_TAGS"
 		;;
 
 	v)
@@ -438,9 +427,12 @@ done
 MODULES=$(parse_cmd_line_arguments $@)
 
 # Convert list of modules into a set of odoo testing tags.
-TEST_TAGS=$(create_test_tags_from_modules "$MODULES")
-
-echo "Tests for [$MODULES] will be run."
+if [ -z "${TEST_TAGS:-}" ]; then
+  echo "Will run all tests in installed modules [$MODULES]."
+  TEST_TAGS=$(create_test_tags_from_modules "$MODULES")
+else
+  echo "Will run with custom --test-tags $TEST_TAGS."
+fi
 
 trace "Finished parsing of command line."
 
@@ -450,7 +442,7 @@ trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
 trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
-DOCKER_HASH=$(echo "$MODULES" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
+DOCKER_HASH=$(echo "$MODULES" "$TEST_TAGS" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
 DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
 DOCKER_ODOO_FULL_NAME="$DOCKER_ODOO-$DOCKER_HASH"
