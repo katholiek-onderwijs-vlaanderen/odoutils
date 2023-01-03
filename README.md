@@ -113,11 +113,11 @@ In order to halt the execution of a specific test place the `breakpoint()` state
 
 ![pdb_insert_breakpoint](/docs/breakpoint.png)
 
-Next you can use pdb commands like ll (listlong), p (print), n (next), etc.. to debug your code:
+Next you can use pdb commands like `ll` (longlist),`p` (print),`n` (next), etc.. to debug your code:
 
 ![pdb_stopped](/docs/pdb-stopped.png)
 
-Continue running the test suite using the c (continue) command:
+Continue running the test suite using the `c` (continue) command:
 
 ![pdb_continue](/docs/pdb-continue.png)
 
