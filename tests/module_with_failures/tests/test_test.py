@@ -3,7 +3,6 @@ from odoo.tests.common import TransactionCase, tagged
 
 class test_test(TransactionCase):
     def test_some_action_1(self):
-        import pdb; pdb.set_trace()
         self.assertTrue(False)
 
     def test_some_action_2(self):
