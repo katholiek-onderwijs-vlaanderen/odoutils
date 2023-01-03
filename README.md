@@ -125,6 +125,8 @@ Continue running the test suite using the `c` (continue) command:
 A good introduction to using pdb can be [found here](https://realpython.com/python-debugging-pdb/).
 A convenient sheet cheat is [located here](https://kapeli.com/cheat_sheets/Python_Debugger.docset/Contents/Resources/Documents/index).
 
+Remove the `breakpoint()` statement from your test if you are done debugging :-)
+
 Being able to enter the debugger in a specific point of your code is also convenient
 if you want to try out some statements interactively. This can be a great help during development.
 
