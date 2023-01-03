@@ -113,6 +113,7 @@ In order to halt the execution of a specific test place the `breakpoint()` state
 
 ![pdb_insert_breakpoint](/docs/breakpoint.png)
 
+When `odounit.sh` is running, it will halt execution of the tests at the breakpoint.
 Next you can use pdb commands like `ll` (longlist),`p` (print),`n` (next), etc.. to debug your code:
 
 ![pdb_stopped](/docs/pdb-stopped.png)
