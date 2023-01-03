@@ -189,11 +189,10 @@ function run_tests {
 	trace "Timestamp when we are running: $timestamp"
 
 	trace "(Re)starting the odoo server to run the test suite."
-	docker start $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
   if [ $PLAIN -eq 0 ]; then
-    docker attach $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
+    docker start -i $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
   else
-    docker attach $DOCKER_ODOO_FULL_NAME 2>&1 | sed 's/\x1b\[[0-9;]*[mGKHF]//g' | tee "$LOG"
+    docker start -i $DOCKER_ODOO_FULL_NAME 2>&1 | sed 's/\x1b\[[0-9;]*[mGKHF]//g' | tee "$LOG"
   fi
 	#docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
 	trace "Server finished running the odoo test suite."
