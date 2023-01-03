@@ -105,6 +105,17 @@ Run a single test (test isolation):
 
 `$ ./odounit.sh -t :class_name.test_name`
 
+### Debugging
+
+You can use the [standard python pdb module](https://docs.python.org/3/library/pdb.html) for debugging your unit tests.
+
+In order to halt the execution of a specific test place the `breakpoint()` statement at the desired location:
+
+![pdb_insert_breakpoint](/docs/breakpoint.png)
+
+A good introduction to using pdb can be [found here](https://realpython.com/python-debugging-pdb/).
+A convenient sheet cheat is [located here](https://kapeli.com/cheat_sheets/Python_Debugger.docset/Contents/Resources/Documents/index).
+
 ## odorun.sh
 
 `Usage: ./odorun.sh [-h | -r] [-b] [-p] [-o] [-g] [odoo_module_name]`
