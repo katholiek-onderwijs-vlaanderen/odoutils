@@ -189,9 +189,8 @@ function run_tests {
 	trace "Timestamp when we are running: $timestamp"
 
 	trace "(Re)starting the odoo server to run the test suite."
-	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
-	docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
-	trace "Server finisfed running the odoo test suite."
+	docker start -i $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
+	trace "Server finished running the odoo test suite."
 
 	if [ $(cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | wc -l) -ne 0 ]; then
 		LAST_RUN_FAILED=1
