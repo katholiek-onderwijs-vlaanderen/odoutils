@@ -9,6 +9,7 @@ SHOULD
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
 - [ ] Add -m for setting the http port for the smtp4dev _m_ail server.
 - [ ] Stop pg container on CTRL-C (otherwise it keeps running - not stop after test run - for speed)
+- [ ] Add support for pdb to odorun (like in odounit)
 
 COULD
 - [ ] Check that reloading the browser on windows/linux can also be automated in odorun :-)
@@ -19,6 +20,7 @@ WILL NOT
 
 DONE:
 
+- [x] Added support to use pdb interactively to odounit.
 - [»] Added -t option to allow test isolation.
 - [x] Added loop-tests.sh script.
 - [x] Fix error message when a module is not found in CWD. Add unit test in test suite. (parse_cmd_line function)
