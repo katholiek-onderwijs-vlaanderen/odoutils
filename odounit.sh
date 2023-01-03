@@ -189,10 +189,13 @@ function run_tests {
 	trace "Timestamp when we are running: $timestamp"
 
 	trace "(Re)starting the odoo server to run the test suite."
-	docker start -i $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
+	#docker start -i $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
+	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
+	docker attach $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
+	#docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME 2>&1 | tee "$LOG"
 	trace "Server finished running the odoo test suite."
 
-	if [ $(cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | wc -l) -ne 0 ]; then
+	if [ $(cat "$LOG" | grep "ERROR.* odoo .*test.*FAIL:" | wc -l) -ne 0 ]; then
 		LAST_RUN_FAILED=1
 
 		if [ "$PLAIN" -eq 0 ]; then
@@ -209,14 +212,14 @@ function run_tests {
 		else
 			echo "These tests failed:"
 		fi
-		cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | sed 's/.*FAIL: //g' | cut -c -$(tput cols)
+		cat "$LOG" | grep "ERROR.*odoo.*test.*FAIL:" | sed 's/.*FAIL: //g' | cut -c -$(tput cols)
 
-		error_count=$(cat "$LOG" | grep ".* ERROR odoo .*test.*FAIL:" | wc -l)
+		error_count=$(cat "$LOG" | grep "ERROR.* odoo .*test.*FAIL:" | wc -l)
 		trace "Counted $error_count errors in the odoo logs."
 
 		[ "$PLAIN" -eq 0 ] && echo "$(tput sgr0)"
 
-	elif [ $(cat $LOG | grep '.* ERROR odoo .*' | wc -l) -ne 0 ]; then
+	elif [ $(cat $LOG | grep 'ERROR.* odoo .*' | wc -l) -ne 0 ]; then
 		LAST_RUN_FAILED=2
 
 		trace "Errors other than FAIL detected.."
