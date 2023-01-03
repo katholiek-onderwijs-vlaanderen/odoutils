@@ -113,6 +113,14 @@ In order to halt the execution of a specific test place the `breakpoint()` state
 
 ![pdb_insert_breakpoint](/docs/breakpoint.png)
 
+Next you can use pdb commands like ll (listlong), p (print), n (next), etc.. to debug your code:
+
+![pdb_stopped](/docs/pdb-stopped.png)
+
+Continue running the test suite using the c (continue) command:
+
+![pdb_continue](/docs/pdb-continue.png)
+
 A good introduction to using pdb can be [found here](https://realpython.com/python-debugging-pdb/).
 A convenient sheet cheat is [located here](https://kapeli.com/cheat_sheets/Python_Debugger.docset/Contents/Resources/Documents/index).
 
