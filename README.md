@@ -183,7 +183,7 @@ logging.getLogger().setLevel(lvl)
 ...
 ```
 
-For debugging purposes the odoo cli options `--limit-time-real` and `--limit-time-cpu` have been set high (10 minutes).
+For debugging purposes - `odorun.sh` the cli options `--limit-time-real` and `--limit-time-cpu` have been set high (10 minutes).
 
 By and large it is advised to create a test case for the problem you encounter, and debug that.
 Interactive debugging on the odoo server can, in some cases, be useful to gain better understanding of a bug.
@@ -199,7 +199,7 @@ Saving an object with end_date < start_date:
 
 ![odoo-stopped](/docs/odoo-stopped.png)
 
-Note that the logging output of odoo is temporarily disabled, to no interfere with your debugging session.
+Note that the logging output of odoo is temporarily disabled, to not interfere with your debugging session.
 After issuing `c` to continue execution, the server output logging is resumed:
 
 ![odoo-continued](/docs/odoo-continued.png)
