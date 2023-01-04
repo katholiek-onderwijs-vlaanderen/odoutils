@@ -24,8 +24,11 @@ DOCKER_PG=odorun-pg
 # Base name of the user-defined bridge network that connects the odoo container with the database container.
 DOCKER_NETWORK=odorun-network
 
+# Base name (without version) to use for odoo docker images.
+#DOCKER_ODOO_IMAGE_BASE=odoo
+DOCKER_ODOO_IMAGE_BASE=odoo-with-icecream
 # Name of the docker image that is used to run the test suite.
-DOCKER_ODOO_IMAGE_NAME=odoo:15
+DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_BASE:15
 # Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
 DOCKER_PG_IMAGE_NAME=postgres:10
 
@@ -282,7 +285,7 @@ while getopts "b:dg:hp:rv" opt; do
 	g)
 		trace "-g detected."
 		VERSION=$OPTARG
-		DOCKER_ODOO_IMAGE_NAME=odoo:$VERSION
+		DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_BASE:$VERSION
 		case $VERSION in
 		13 | 14 | 15)
 			DOCKER_PG_IMAGE_NAME=postgres:10
