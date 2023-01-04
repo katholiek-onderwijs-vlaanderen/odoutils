@@ -168,7 +168,7 @@ Remove the `breakpoint()` statement from your code if you are done debugging :-)
 Being able to enter the debugger in a specific point of your code is also convenient
 if you want to try out some statements interactively. This can be a great help during development.
 
-Debugging of code in a running odoo *server* can be done, but you probably want to disable logging temporarily like this:
+Debugging of code in a __running odoo server__ can be done, but you probably want to disable logging temporarily like this:
 
 ```
 ...
@@ -183,7 +183,7 @@ For debugging purposes the odoo cli options `--limit-time-real` and `--limit-tim
 
 By and large it is advised to create a test case for the problem you encounter, and debug that.
 Interactive debugging on the odoo server can, in some cases, be useful to gain better understanding of a bug.
-But creating a test case to cover the bug is _essential_ TDD practice :-).
+But creating a test case to cover the bug is __essential__ TDD practice :-).
 
 # Contributing & Technical Documentation
 
