@@ -10,6 +10,10 @@ SCRIPT_VERSION=0.1
 # Temp file where debug tracing is written. Tail it to debug the script.
 TRACE=/tmp/odoutils-trace.log
 
+# Temp filie that is used to communicate from the subproces to the main proces that docker stop 
+# is due to changes in files, signaling that - instead of exiting the script - we should restart the odoo server.
+ODORUN_RESTART_DUE_TO_CHANGES_DETECTED=/tmp/odorun-restart-due-to-changes-detected
+
 # Base names for dockers.
 # The actual name incorporates a hash that is dependent on module to test, odoo version and database version.
 
@@ -128,30 +132,20 @@ function delete_containers {
 	truncate $TRACE >/dev/null 2>&1
 }
 
-function ctrl_c() {
-	echo "Stopping containers ..."
-	trace "Stopping odoo server"
-	docker stop $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
-	trace "Stopping postgres server"
-	docker stop $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
-	echo "Done."
-	trace "----- Script ENDED -----"
-	exit 0
-}
-
-function restart_server {
-	trace "Restarting server."
+# Start the odoo container, and attaches to it to allow interactive debugging (pdb).
+function run_server {
+	trace "RUN - Running server."
 
 	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
-	trace "Timestamp when we are restarting: $timestamp"
-
-	trace "(Re)starting the odoo server to run the module."
+  trace "RUN - Timestamp when we are (re)starting: $timestamp"
+	trace "RUN - (Re)starting the odoo server to run the module."
 	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
+  trace "RUN - (Re)start command done."
 
-	trace "Starting tailing of docker log in background."
+	trace "RUN - Attaching to docker."
 	docker attach $DOCKER_ODOO_FULL_NAME
+  trace "RUN - docker attach command exited."
 	#docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
-
 }
 
 # Check that $@ has one or more modules to test.
@@ -164,7 +158,7 @@ function restart_server {
 function parse_cmd_line_arguments() {
   RET=""
 
-  trace "Parsing [" $# "] command line arguments."
+  trace "Parsing [$#] command line arguments."
   for m in $@; do
     trace "Removing any trailing / if present for ["$m"]"
     m=$(echo "$m" | sed 's/\///g')
@@ -188,22 +182,59 @@ function calculate_hash() {
 }
 
 function stop_docker_on_file_change() {
+  trace "STOP - Watching for changes in background."
+
   CURRENT_HASH=$(calculate_hash)
   while true; do
+    trace "STOP - beginning loop."
+
+    trace "STOP - checking parent process $$."
+    # Check that parent process is still active
+    if ! ps -p $$ > /dev/null; then
+      trace "STOP - parent process is not active."
+      trace "STOP - RETURN"
+      return
+    else
+      trace "STOP - parent process is still active. Continuing."
+    fi
+
+    # Check if changes were detected.
+    trace "STOP - checking for changes."
     if [ "$(calculate_hash)" != "$CURRENT_HASH" ]; then
+      trace "STOP - changes detected."
       CURRENT_HASH=$(calculate_hash)
       # The script is in a loop, so stopping the docker here,
       # will cause the script to restart it.
-      docker stop $DOCKER_ODOO_FULL_NAME
+      #
+      # create the signal file that tells the main loop to continue,
+      # rather than existing.
+      trace "STOP - Creating signal file."
+      touch "$ODORUN_RESTART_DUE_TO_CHANGES_DETECTED"
+
+      trace "STOP - Stopping docker."
+      echo -n "File changes detected. Restarting odoo server -> "
+      docker stop $DOCKER_ODOO_FULL_NAME >>"$TRACE" 2>&1
+      trace "STOP - docker stop command done."
+      trace "STOP - RETURN"
+      return
+    else
+      trace "STOP - no changes detected. Continuing."
     fi
 
+    # Check that parent process is still active
     if [ "$(calculate_hash)" == "$CURRENT_HASH" ]; then
-      inotifywait -r -q -e modify,move,create,delete,attrib . 
+      trace "STOP - No changes detected. Waiting on filesystem changes via inotifywait.."
+      inotifywait -r -q -e modify,move,create,delete,attrib . >>"$TRACE" 2>&1
+      trace "STOP - inotifywait done"
     fi
   done
 }
 
+touch "$TRACE"
+truncate -s 0 "$TRACE"
+trace "---------------------------"
 trace "----- Script STARTING -----"
+trace "---------------------------"
 
 # Check if all dependencies are installed..
 trace "Verifying that docker is installed."
@@ -381,12 +412,17 @@ docker start $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
 trace "Timestamp when we are running: $timestamp"
 
-trap ctrl_c INT
-trace "Starting tailing of docker log in background."
-
-trace "Waiting for a change to occur in files that need a restart."
-stop_docker_on_file_change &
-
 while true; do
-  restart_server
+  rm -f "$ODORUN_RESTART_DUE_TO_CHANGES_DETECTED" >>"$TRACE" 2>&1
+  stop_docker_on_file_change&
+  run_server
+
+  if [ -f "$ODORUN_RESTART_DUE_TO_CHANGES_DETECTED" ]; then 
+    # Remove signal file.
+    trace "MAIN - Changes detected, restarting server..."
+  else
+    trace "MAIN - no signal file detected - assuming manual stop."
+    echo "Manual stop."
+    exit 0
+  fi
 done
