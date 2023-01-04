@@ -172,6 +172,10 @@ Debugging of code in a __running odoo server__ can be done, but you probably wan
 
 ```
 ...
+import logging
+
+...
+
 lvl = logging.getLogger().getEffectiveLevel()
 logging.getLogger().setLevel(logging.CRITICAL)
 breakpoint()
@@ -187,9 +191,16 @@ But creating a test case to cover the bug is __essential__ TDD practice :-).
 
 Example:
 
+Setting a breakpoint in an odoo model:
+
 ![odoo_breakpoint](/docs/odoo-breakpoint.png)
 
+Saving an object with end_date < start_date:
+
 ![odoo-stopped](/docs/odoo-stopped.png)
+
+Note that the logging output of odoo is temporarily disabled, to no interfere with your debugging session.
+After issuing `c` to continue execution, the server output logging is resumed:
 
 ![odoo-continued](/docs/odoo-continued.png)
 
