@@ -185,6 +185,14 @@ By and large it is advised to create a test case for the problem you encounter, 
 Interactive debugging on the odoo server can, in some cases, be useful to gain better understanding of a bug.
 But creating a test case to cover the bug is __essential__ TDD practice :-).
 
+Example:
+
+![odoo_breakpoint](/docs/odoo-breakpoint.png)
+
+![odoo-stopped](/docs/odoo-stopped.png)
+
+![odoo-continued](/docs/odoo-continued.png)
+
 # Contributing & Technical Documentation
 
 A *high-level overview* of the technical design for `odounit.sh` is [described here](/docs/TECH_OVERVIEW_ODOUNIT.md).
