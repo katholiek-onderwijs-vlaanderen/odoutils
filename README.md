@@ -174,12 +174,12 @@ Debugging of code in a __running odoo server__ can be done, but you probably wan
 ...
 import logging
 
-...
-
 lvl = logging.getLogger().getEffectiveLevel()
 logging.getLogger().setLevel(logging.CRITICAL)
-breakpoint()
-logging.getLogger().setLevel(lvl)
+try:
+  breakpoint()
+finally:
+  logging.getLogger().setLevel(logging.INFO)
 ...
 ```
 
