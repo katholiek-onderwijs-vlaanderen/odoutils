@@ -7,4 +7,3 @@ class test_test(TransactionCase):
 
     def test_some_action_2(self):
         self.assertTrue(True)
-

@@ -149,7 +149,8 @@ function restart_server {
 	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
 
 	trace "Starting tailing of docker log in background."
-	docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
+	docker attach $DOCKER_ODOO_FULL_NAME
+	#docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
 
 }
 
@@ -184,6 +185,22 @@ function parse_cmd_line_arguments() {
 # echoes back a hash value.
 function calculate_hash() {
 		echo $(find "$@" -type f -exec ls -l --full-time {} + | sort | md5sum)
+}
+
+function stop_docker_on_file_change() {
+  CURRENT_HASH=$(calculate_hash)
+  while true; do
+    if [ "$(calculate_hash)" != "$CURRENT_HASH" ]; then
+      CURRENT_HASH=$(calculate_hash)
+      # The script is in a loop, so stopping the docker here,
+      # will cause the script to restart it.
+      docker stop $DOCKER_ODOO_FULL_NAME
+    fi
+
+    if [ "$(calculate_hash)" == "$CURRENT_HASH" ]; then
+      inotifywait -r -q -e modify,move,create,delete,attrib . 
+    fi
+  done
 }
 
 trace "----- Script STARTING -----"
@@ -349,7 +366,7 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-	command="docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME $DOCKER_ODOO_IMAGE_NAME -d odoo -u $MODULES -i $MODULES -l en_US --without-demo all" 
+	command="docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME --interactive --tty $DOCKER_ODOO_IMAGE_NAME -d odoo -u $MODULES -i $MODULES -l en_US --without-demo all" 
   echo $command
   $command >>$TRACE 2>&1
 else
@@ -364,23 +381,12 @@ docker start $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
 trace "Timestamp when we are running: $timestamp"
 
-trace "(Re)starting the odoo server to run the module."
-CURRENT_HASH=$(calculate_hash)
-docker start $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
-
 trap ctrl_c INT
 trace "Starting tailing of docker log in background."
-docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
 
 trace "Waiting for a change to occur in files that need a restart."
+stop_docker_on_file_change &
 
 while true; do
-  if [ "$(calculate_hash)" != "$CURRENT_HASH" ]; then
-    CURRENT_HASH=$(calculate_hash)
-    restart_server
-  fi
-
-  if [ "$(calculate_hash)" == "$CURRENT_HASH" ]; then
-    inotifywait -r -q -e modify,move,create,delete,attrib . 
-  fi
+  restart_server
 done
