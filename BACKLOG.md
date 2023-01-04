@@ -2,14 +2,16 @@ TO DO:
 
 MUST
 
+- [ ] Add support for requirements.txt -> should build a custom docker image with installed dependencies. Hash must include content of requirements.txt.
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
 - [ ] Add smtp4dev to odorun.sh to catch all mails, yet have a functional mail server - and allow for inspecting mails in dev mode.
 
 SHOULD
+- [ ] Add support for pdb to odorun (like in odounit)
+- [ ] remove dependencies check if running in plain mode -> should not complain about figlet / tput / .. not being installed.
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
 - [ ] Add -m for setting the http port for the smtp4dev _m_ail server.
 - [ ] Stop pg container on CTRL-C (otherwise it keeps running - not stop after test run - for speed)
-- [ ] Add support for pdb to odorun (like in odounit)
 
 COULD
 - [ ] Check that reloading the browser on windows/linux can also be automated in odorun :-)
