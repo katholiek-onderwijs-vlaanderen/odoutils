@@ -133,7 +133,7 @@ function delete_containers {
 }
 
 # Start the odoo container, and attaches to it to allow interactive debugging (pdb).
-function run_server {
+function run_server_interactive {
 	trace "RUN - Running server."
 
 	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
@@ -415,7 +415,7 @@ trace "Timestamp when we are running: $timestamp"
 while true; do
   rm -f "$ODORUN_RESTART_DUE_TO_CHANGES_DETECTED" >>"$TRACE" 2>&1
   stop_docker_on_file_change&
-  run_server
+  run_server_interactive
 
   if [ -f "$ODORUN_RESTART_DUE_TO_CHANGES_DETECTED" ]; then 
     # Remove signal file.
