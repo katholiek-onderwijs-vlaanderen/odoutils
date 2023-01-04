@@ -397,7 +397,7 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-	command="docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME --interactive --tty $DOCKER_ODOO_IMAGE_NAME -d odoo -u $MODULES -i $MODULES -l en_US --without-demo all" 
+	command="docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME --interactive --tty --limit-time-real 600 --limit-time-cpu 600 $DOCKER_ODOO_IMAGE_NAME -d odoo -u $MODULES -i $MODULES -l en_US --without-demo all" 
   echo $command
   $command >>$TRACE 2>&1
 else
