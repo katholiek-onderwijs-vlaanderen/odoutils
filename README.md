@@ -105,31 +105,6 @@ Run a single test (test isolation):
 
 `$ ./odounit.sh -t :class_name.test_name`
 
-### Debugging
-
-You can use the [standard python pdb module](https://docs.python.org/3/library/pdb.html) for debugging your unit tests.
-
-In order to halt the execution of a specific test place the `breakpoint()` statement at the desired location:
-
-![pdb_insert_breakpoint](/docs/breakpoint.png)
-
-When `odounit.sh` is running, it will halt execution of the tests at the breakpoint.
-Next you can use pdb commands like `ll` (longlist),`p` (print),`n` (next), etc.. to debug your code:
-
-![pdb_stopped](/docs/pdb-stopped.png)
-
-Continue running the test suite using the `c` (continue) command:
-
-![pdb_continue](/docs/pdb-continue.png)
-
-A good introduction to using pdb can be [found here](https://realpython.com/python-debugging-pdb/).
-A convenient cheat sheet is [located here](https://kapeli.com/cheat_sheets/Python_Debugger.docset/Contents/Resources/Documents/index).
-
-Remove the `breakpoint()` statement from your test if you are done debugging :-)
-
-Being able to enter the debugger in a specific point of your code is also convenient
-if you want to try out some statements interactively. This can be a great help during development.
-
 ## odorun.sh
 
 `Usage: ./odorun.sh [-h | -r] [-b] [-p] [-o] [-g] [odoo_module_name]`
@@ -167,6 +142,31 @@ Delete all containers and log files (by default containers are created and then 
 Run `my_module` on port 9090:
 
 `$ ./odorun.sh -p 9090 my_module`
+
+### Debugging
+
+You can use the [standard python pdb module](https://docs.python.org/3/library/pdb.html) for debugging.
+
+In order to halt the execution of your code place the `breakpoint()` statement at the desired location:
+
+![pdb_insert_breakpoint](/docs/breakpoint.png)
+
+When `odounit.sh` or `odorun.sh` is running, it will halt execution at the breakpoint.
+Next you can use pdb commands like `ll` (longlist),`p` (print),`n` (next), etc.. to debug your code:
+
+![pdb_stopped](/docs/pdb-stopped.png)
+
+Continue running the code using the `c` (continue) command:
+
+![pdb_continue](/docs/pdb-continue.png)
+
+A good introduction to using pdb can be [found here](https://realpython.com/python-debugging-pdb/).
+A convenient cheat sheet is [located here](https://kapeli.com/cheat_sheets/Python_Debugger.docset/Contents/Resources/Documents/index).
+
+Remove the `breakpoint()` statement from your code if you are done debugging :-)
+
+Being able to enter the debugger in a specific point of your code is also convenient
+if you want to try out some statements interactively. This can be a great help during development.
 
 # Contributing & Technical Documentation
 
