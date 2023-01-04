@@ -25,8 +25,8 @@ DOCKER_PG=odorun-pg
 DOCKER_NETWORK=odorun-network
 
 # Base name (without version) to use for odoo docker images.
-#DOCKER_ODOO_IMAGE_BASE=odoo
-DOCKER_ODOO_IMAGE_BASE=odoo-with-icecream
+DOCKER_ODOO_IMAGE_BASE=odoo
+#DOCKER_ODOO_IMAGE_BASE=odoo-with-icecream
 # Name of the docker image that is used to run the test suite.
 DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_BASE:15
 # Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
