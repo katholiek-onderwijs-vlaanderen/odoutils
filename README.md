@@ -123,7 +123,7 @@ Continue running the test suite using the `c` (continue) command:
 ![pdb_continue](/docs/pdb-continue.png)
 
 A good introduction to using pdb can be [found here](https://realpython.com/python-debugging-pdb/).
-A convenient sheet cheat is [located here](https://kapeli.com/cheat_sheets/Python_Debugger.docset/Contents/Resources/Documents/index).
+A convenient cheat sheet is [located here](https://kapeli.com/cheat_sheets/Python_Debugger.docset/Contents/Resources/Documents/index).
 
 Remove the `breakpoint()` statement from your test if you are done debugging :-)
 
