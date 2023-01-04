@@ -7,7 +7,6 @@ MUST
 - [ ] Add smtp4dev to odorun.sh to catch all mails, yet have a functional mail server - and allow for inspecting mails in dev mode.
 
 SHOULD
-- [ ] Add support for pdb to odorun (like in odounit)
 - [ ] remove dependencies check if running in plain mode -> should not complain about figlet / tput / .. not being installed.
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
 - [ ] Add -m for setting the http port for the smtp4dev _m_ail server.
@@ -22,6 +21,7 @@ WILL NOT
 
 DONE:
 
+- [x] Add support for pdb to odorun (like in odounit)
 - [x] Added support to use pdb interactively to odounit.
 - [»] Added -t option to allow test isolation.
 - [x] Added loop-tests.sh script.
