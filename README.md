@@ -193,7 +193,7 @@ def new_breakpointhook(*args, **kwargs):
 sys.breakpointhook = new_breakpointhook
 ```
 
-For debugging purposes - `odorun.sh` the cli options `--limit-time-real` and `--limit-time-cpu` have been set high (10 minutes).
+For debugging purposes - `odorun.sh` the cli options `--limit-time-real` and `--limit-time-cpu` have been set high (30 minutes).
 
 By and large it is advised to create a test case for the problem you encounter, and debug that.
 Interactive debugging on the odoo server can, in some cases, be useful to gain better understanding of a bug.
