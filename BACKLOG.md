@@ -7,7 +7,9 @@ MUST
 - [ ] Add smtp4dev to odorun.sh to catch all mails, yet have a functional mail server - and allow for inspecting mails in dev mode.
 
 SHOULD
-- [ ] Investigate if Pdb allows PRE / POST handlers to be registered -> disable / enable logging in there?
+
+- [ ] Investigate on how to make logging of odoo model objects convenient for logging/debugging.
+- [ ] Investigate icecream package for logging execution / data of code.
 - [ ] remove dependencies check if running in plain mode -> should not complain about figlet / tput / .. not being installed.
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
 - [ ] Add -m for setting the http port for the smtp4dev mail server.
@@ -22,6 +24,7 @@ WILL NOT
 
 DONE:
 
+- [x] Investigate if Pdb allows PRE / POST handlers to be registered -> disable / enable logging in there?
 - [x] Add support for pdb to odorun (like in odounit)
 - [x] Added support to use pdb interactively to odounit.
 - [x] Added -t option to allow test isolation.

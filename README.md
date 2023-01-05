@@ -172,25 +172,29 @@ Debugging of code in a __running odoo server__ can be done, but you probably wan
 This can be done by adding the snippet of code below into your top-level `__init__.py` file:
 
 ```
-# Add a hook in the breakpoint handler to temporarily disable odoo logging,
-# so that the output of other workers than the one being debugged 
-# do not get in your way during debugging.
-#
-# Re-enable the logging when the debugging session is done.
-import sys
 import logging
+import sys
 
-old_breakpointhook = sys.breakpointhook
+def filter_logs_during_debug(record):
+    debugging = False
+    thread_ids = sys._current_frames().keys()
+    for thread_id in thread_ids:
+        frame = sys._current_frames()[thread_id]
+        while frame:
+            code = frame.f_code
+            # if name is 'trace_dispatch' in filename ending in 'bdb.py' than we are in debugging mode.
+            # Unfortunatile threading only adds gettrace() function as of python 3.10.
+            if code.co_name == 'trace_dispatch' and code.co_filename.endswith('bdb.py'):
+                debugging = True
+                break
+            frame = frame.f_back
 
-def new_breakpointhook(*args, **kwargs):
-  old_root_logger_level = logging.getLogger().getEffectiveLevel()
-  logging.getLogger().setLevel(logging.CRITICAL)
-  try:
-    old_breakpointhook(*args, **kwargs)
-  finally:
-    logging.getLogger().setLevel(old_root_logger_level)
+    return not debugging
 
-sys.breakpointhook = new_breakpointhook
+root_logger = logging.getLogger()
+handlers = root_logger.handlers
+for handler in handlers:
+    handler.addFilter(filter_logs_during_debug)
 ```
 
 For debugging purposes - `odorun.sh` the cli options `--limit-time-real` and `--limit-time-cpu` have been set high (30 minutes).
