@@ -169,7 +169,7 @@ Being able to enter the debugger in a specific point of your code is also conven
 if you want to try out some statements interactively. This can be a great help during development.
 
 Debugging of code in a __running odoo server__ can be done, but you probably want to disable logging temporarily.
-This can be done by adding the snippet of code below into your top-level __init__.py file:
+This can be done by adding the snippet of code below into your top-level `__init__.py` file:
 
 ```
 # Add a hook in the breakpoint handler to temporarily disable odoo logging,
@@ -200,6 +200,10 @@ Interactive debugging on the odoo server can, in some cases, be useful to gain b
 But creating a test case to cover the bug is __essential__ TDD practice :-).
 
 Example:
+
+Adding the snippet to temporarily disable logging during a debug session in top level `__init__.py`:
+
+![odoo_init](/docs/odoo-init.png)
 
 Setting a breakpoint in an odoo model:
 
