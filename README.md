@@ -168,19 +168,29 @@ Remove the `breakpoint()` statement from your code if you are done debugging :-)
 Being able to enter the debugger in a specific point of your code is also convenient
 if you want to try out some statements interactively. This can be a great help during development.
 
-Debugging of code in a __running odoo server__ can be done, but you probably want to disable logging temporarily like this:
+Debugging of code in a __running odoo server__ can be done, but you probably want to disable logging temporarily.
+This can be done by adding the snippet of code below into your top-level __init__.py file:
 
 ```
-...
+# Add a hook in the breakpoint handler to temporarily disable odoo logging,
+# so that the output of other workers than the one being debugged 
+# do not get in your way during debugging.
+#
+# Re-enable the logging when the debugging session is done.
+import sys
 import logging
 
-lvl = logging.getLogger().getEffectiveLevel()
-logging.getLogger().setLevel(logging.CRITICAL)
-try:
-  breakpoint()
-finally:
-  logging.getLogger().setLevel(logging.INFO)
-...
+old_breakpointhook = sys.breakpointhook
+
+def new_breakpointhook:
+  old_root_logger_level = logging.getLogger().getEffectiveLevel()
+  logging.getLogger().setLevel(logging.CRITICAL)
+  try:
+    old_breakpointhook()
+  finally:
+    logging.getLogger().setLevel(old_root_logger_level)
+
+sys.breakpointhook = new_breakpointhook
 ```
 
 For debugging purposes - `odorun.sh` the cli options `--limit-time-real` and `--limit-time-cpu` have been set high (10 minutes).
