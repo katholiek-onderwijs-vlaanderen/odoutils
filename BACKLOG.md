@@ -8,6 +8,7 @@ MUST
 
 SHOULD
 
+- [ ] update code snippet for log suppression to only install filter on appenders that write to STDOUT/STDERR, not to other (file/...) appenders.
 - [ ] Investigate on how to make logging of odoo model objects convenient for logging/debugging.
 - [ ] Investigate icecream package for logging execution / data of code.
 - [ ] remove dependencies check if running in plain mode -> should not complain about figlet / tput / .. not being installed.
