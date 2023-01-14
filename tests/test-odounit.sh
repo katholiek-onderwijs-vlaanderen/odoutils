@@ -9,9 +9,13 @@ TRACE=/tmp/odounit-test-trace.log
 # Output of odounit.sh is logged here
 CMD_LOG=/tmp/odounit-test.log
 
-function setUpOnce() {
-    truncate "$CMD_LOG"
-    truncate "$TRACE"
+function oneTimeSetUp() {
+  "$CMD" -r
+}
+
+function setUp() {
+  truncate -s 0 "$TRACE"
+  truncate -s 0 "$CMD_LOG"
 }
 
 function trace() {
@@ -21,6 +25,7 @@ function trace() {
 function testSuccess() {
     trace "Testing happy path. Executing test suite for module_wihout_failure."
     "$CMD" -p -o module_without_failures >$CMD_LOG
+
     RET=$?
     trace "Return value was [$RET]."
 
@@ -101,6 +106,7 @@ function testRemoveContainers() {
 
     trace "Checking that they were deleted."
     assertTrue "All docker containers should be removed." "[ $(docker ps -a | grep 'run-odoo-tests' | wc -l) -eq 0 ]"
+    assertTrue "All docker images should be removed." "[ $(docker image ls | grep 'odounit-.*' | wc -l) -eq 0 ]"
 }
 
 function testNonExistingModule() {
@@ -163,7 +169,7 @@ function testCustomTestTags() {
     RET=$?
 
     assertEquals "Running should exit with success code 0." 0 $RET
-    count=$(cat $CMD_LOG | grep "Success" | wc -l)
+    count=$(cat $CMD_LOG | grep '^Success$' | wc -l)
     assertEquals "Should have completed with message [Success]" 1 $count
 }
 

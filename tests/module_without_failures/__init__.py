@@ -6,14 +6,3 @@
 import sys
 import logging
 
-old_breakpointhook = sys.breakpointhook
-
-def new_breakpointhook(*args, **kwargs):
-  old_root_logger_level = logging.getLogger().getEffectiveLevel()
-  logging.getLogger().setLevel(logging.CRITICAL)
-  try:
-    old_breakpointhook(*args, **kwargs)
-  finally:
-    logging.getLogger().setLevel(old_root_logger_level)
-
-sys.breakpointhook = new_breakpointhook

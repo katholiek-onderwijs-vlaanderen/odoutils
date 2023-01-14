@@ -11,6 +11,8 @@ SCRIPT_VERSION=0.9
 LOG=/tmp/odounit-odoo-container.log
 # Temp file where debug tracing is written. Tail it to debug the script.
 TRACE=/tmp/odoutils-trace.log
+# Temp folder for building the custom docker image
+DOCKER_BUILD_DIR=/tmp/odoutils-docker-build
 
 # Base names for dockers.
 # The actual name incorporates a hash that is dependent on module to test, odoo version and database version.
@@ -41,11 +43,24 @@ function trace() {
 	echo "$1" >>"$TRACE" 2>&1
 }
 
-function ctrl_c_once() {
+function stop_odoo() {
 	trace "Stopping odoo server"
 	docker stop $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
+}
+
+function stop_database() {
 	trace "Stopping postgres server"
 	docker stop $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
+}
+
+# Stop both database and odoo docker (database first)
+function stop_containers() {
+  stop_database
+  stop_odoo
+}
+
+function ctrl_c_once() {
+  stop_containers
 	exit 0
 }
 
@@ -156,13 +171,14 @@ function big_text {
   fi
 }
 
-function delete_containers {
+function remove_everything {
 	if [ $(docker ps -a | grep "$DOCKER_ODOO" | wc -l) -gt 0 ]; then
 		trace "Deleting all odoo containers."
 		docker rm -f $(docker ps -a | grep "$DOCKER_ODOO" | cut -f 1 -d ' ') >>$TRACE
 	else
 		trace "No odoo containers found to delete."
 	fi
+
 	if [ $(docker ps -a | grep "$DOCKER_PG" | wc -l) -gt 0 ]; then
 		trace "Deleting all pg containers."
 		docker rm -f $(docker ps -a | grep "$DOCKER_PG" | cut -f 1 -d ' ') >>$TRACE
@@ -177,10 +193,17 @@ function delete_containers {
 		trace "No bridge networks found to delete."
 	fi
 
+  if [ $(docker image ls | grep "^odounit-" | wc -l) -gt 0 ]; then
+    trace "Deleting odounit images."
+    docker image rm $(docker image ls | awk 'BEGIN {IFS="\t"} $0 ~ /^odounit-/ { print $1 ":" $2 }') >>$TRACE
+  else
+    trace "No odounit images found to delete."
+  fi
+
 	trace "Truncating log and trace files."
-	truncate $LOG >>$TRACE 2>&1
+	truncate --size 0 $LOG >>$TRACE 2>&1
 	trace "truncating trace files. BYE BYE! :)"
-	truncate $TRACE >/dev/null 2>&1
+	truncate --size 0 $TRACE >/dev/null 2>&1
 }
 
 function run_tests {
@@ -303,7 +326,49 @@ function create_test_tags_from_modules() {
 #
 # echoes back a hash value.
 function calculate_hash() {
-		echo $(find "$@" -type f -exec ls -l --full-time {} + | sort | md5sum)
+    timestamps=$(find "$@" -type f -exec ls -l --full-time {} + | sort)
+    trace "timestamps: $timestamps"
+    # if requirements.txt exists, read from file. Otherwise default to empty.
+    if [ -f requirements.txt ]; then
+      trace "reading requirements.txt"
+      requirements=$(cat requirements.txt)
+    else
+      requirements=""
+    fi
+    trace "requirements: $requirements"
+
+    hash=$(echo "$timestamps\n$requirements" | md5sum | cut -d ' ' -f1)
+    trace "Calculated hash: $hash"
+
+    echo "$hash"
+}
+
+# Create a docker image that contains all the pip dependencies found in requirements.txt
+function create_docker_image() {
+  # If the docker image exists -> skip
+  trace "Scanning if docker exists: odounit-$DOCKER_HASH:1"
+  if [ $(docker image ls | grep "odounit-$DOCKER_HASH" | wc -l) -eq 1 ]; then
+    trace "Docker image is already available. Skipping build step for docker."
+    return
+  fi
+  trace "Docker image not found. Creating it."
+
+  rm -rf "$DOCKER_BUILD_DIR"
+  mkdir -p "$DOCKER_BUILD_DIR"
+
+  touch "$DOCKER_BUILD_DIR/Dockerfile"
+  echo "FROM $DOCKER_ODOO_IMAGE_NAME" >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "" >>"$DOCKER_BUILD_DIR/Dockerfile"
+
+  # if requirements.txt exists, read it into variable REQUIREMENTS
+  if [ -f "requirements.txt" ]; then
+    cat requirements.txt | awk '{ gensub(/(.*)/, "RUN python3 -m pip install \\1", "g") }' >>"$DOCKER_BUILD_DIR/Dockerfile"
+  fi
+
+  echo "Dockerfile:"
+  cat "$DOCKER_BUILD_DIR/Dockerfile"
+
+  docker build "$DOCKER_BUILD_DIR" -t "odounit-${DOCKER_HASH}:1"
 }
 
 trace "*** Script starting..."
@@ -387,9 +452,9 @@ while getopts "dg:hoprt:v" opt; do
 
 	r)
 		trace "-r detected. deleting conatiner + networks."
-		echo "Removing postgres and odoo containers used for running tests."
+		echo "Removing docker images + postgres and odoo containers used for running tests."
 		echo "They will be created automatically again when you run $0."
-		delete_containers
+		remove_everything
 		echo "Done."
 		exit 0
 		;;
@@ -449,7 +514,11 @@ trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
 trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
-DOCKER_HASH=$(echo "$MODULES" "$TEST_TAGS" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
+REQUIREMENTS_TXT=""
+if [ -f "requirements.txt" ]; then
+  REQUIREMENTS_HASH=$(cat requirements.txt | md5sum | awk 'BEGIN {IFS="\t"} { print $1 }')
+fi
+DOCKER_HASH=$(echo "$REQUIREMENTS_HASH" "$MODULES" "$TEST_TAGS" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
 DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
 DOCKER_ODOO_FULL_NAME="$DOCKER_ODOO-$DOCKER_HASH"
@@ -460,6 +529,8 @@ trace "DOCKER_ODOO_FULL_NAME=$DOCKER_ODOO_FULL_NAME"
 
 trace "PLAIN=$PLAIN"
 trace "ONCE=$ONCE"
+
+create_docker_image
 
 echo "Checking if the user-defined bridge network exists." >>$TRACE
 if [ $(docker network ls | grep "$DOCKER_NETWORK_FULL_NAME" | wc -l) -eq 0 ]; then
@@ -512,5 +583,8 @@ else
 	# Set handling of CTRL-C to allow the user to stop the loop.
 	trap ctrl_c_once INT
 	run_tests
+  stop_containers
 	exit $LAST_RUN_FAILED
 fi
+
+stop_containers

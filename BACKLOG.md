@@ -8,13 +8,13 @@ MUST
 
 SHOULD
 
+- [ ] Encapsulate code to suspend odoo logging during debug in module that is installed.
 - [ ] update code snippet for log suppression to only install filter on appenders that write to STDOUT/STDERR, not to other (file/...) appenders.
 - [ ] Investigate on how to make logging of odoo model objects convenient for logging/debugging.
 - [ ] Investigate icecream package for logging execution / data of code.
 - [ ] remove dependencies check if running in plain mode -> should not complain about figlet / tput / .. not being installed.
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
 - [ ] Add -m for setting the http port for the smtp4dev mail server.
-- [ ] Stop pg container on CTRL-C (otherwise it keeps running - not stop after test run - for speed)
 
 COULD
 - [ ] Check that reloading the browser on windows/linux can also be automated in odorun :-)
@@ -25,6 +25,7 @@ WILL NOT
 
 DONE:
 
+- [x] Stop pg container on CTRL-C (otherwise it keeps running - not stop after test run - for speed)
 - [x] Investigate if Pdb allows PRE / POST handlers to be registered -> disable / enable logging in there?
 - [x] Add support for pdb to odorun (like in odounit)
 - [x] Added support to use pdb interactively to odounit.
