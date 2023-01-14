@@ -362,7 +362,9 @@ function create_docker_image() {
 
   # if requirements.txt exists, read it into variable REQUIREMENTS
   if [ -f "requirements.txt" ]; then
-    cat requirements.txt | awk '{ gensub(/(.*)/, "RUN python3 -m pip install \\1", "g") }' >>"$DOCKER_BUILD_DIR/Dockerfile"
+    trace "Converting requirements.txt into docker RUN pip install statements."
+    cat requirements.txt | awk '{ print gensub(/(.*)/, "RUN python3 -m pip install \\1", "g") }' 
+    cat requirements.txt | awk '{ print gensub(/(.*)/, "RUN python3 -m pip install \\1", "g") }' >>"$DOCKER_BUILD_DIR/Dockerfile"
   fi
 
   echo "Dockerfile:"
