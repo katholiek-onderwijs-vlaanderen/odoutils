@@ -105,6 +105,11 @@ Run a single test (test isolation):
 
 `$ ./odounit.sh -t :class_name.test_name`
 
+### Adding Python dependencies
+
+If the folder where you execute odounit.sh contains a `requirements.txt` file than dependencies 
+in that folder will be added to the docker image where odounit runs the unit tests.
+
 ## odorun.sh
 
 `Usage: ./odorun.sh [-h | -r] [-b] [-p] [-o] [-g] [odoo_module_name]`

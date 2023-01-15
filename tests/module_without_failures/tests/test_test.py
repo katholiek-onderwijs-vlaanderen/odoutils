@@ -15,5 +15,5 @@ class test_test(TransactionCase):
 
     def test_ice_cream_dependency(self):
         test_array = ['a', 'b', 'c', 'd', 'e']
-        ic(test_array)
         # if ic(test_array) can run, than requirements.txt was indeed processed correctly.
+        ic(test_array)

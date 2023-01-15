@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="test_odorun" model="ir.cron">
+        <field name="name">Test Odorun</field>
+        <field name="model_id" ref="model_test_test"/>
+        <field name="code">model.employee_user_cron()</field>
+        <field name="interval_type">minutes</field>
+        <field name="interval_number">1</field>
+        <field name="numbercall">1</field>
+        <field name="doall" eval="False"/>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

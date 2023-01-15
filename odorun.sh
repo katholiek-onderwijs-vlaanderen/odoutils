@@ -10,6 +10,9 @@ SCRIPT_VERSION=0.1
 # Temp file where debug tracing is written. Tail it to debug the script.
 TRACE=/tmp/odoutils-trace.log
 
+# Temp folder for building the custom docker image
+DOCKER_BUILD_DIR=/tmp/odoutils-docker-build
+
 # Temp filie that is used to communicate from the subproces to the main proces that docker stop 
 # is due to changes in files, signaling that - instead of exiting the script - we should restart the odoo server.
 ODORUN_RESTART_DUE_TO_CHANGES_DETECTED=/tmp/odorun-restart-due-to-changes-detected
@@ -110,7 +113,7 @@ function help_message {
 	echo
 }
 
-function delete_containers {
+function remove_everything {
 	if [ $(docker ps -a | grep "$DOCKER_ODOO" | wc -l) -gt 0 ]; then
 		trace "Deleting all odoo containers."
 		docker rm -f $(docker ps -a | grep "$DOCKER_ODOO" | cut -f 1 -d ' ') >>$TRACE
@@ -131,8 +134,15 @@ function delete_containers {
 		trace "No bridge networks found to delete."
 	fi
 
+  if [ $(docker image ls | grep "^odorun-" | wc -l) -gt 0 ]; then
+    trace "Deleting odorun images."
+    docker image rm $(docker image ls | awk 'BEGIN {IFS="\t"} $0 ~ /^odorun-/ { print $1 ":" $2 }') >>$TRACE
+  else
+    trace "No odorun images found to delete."
+  fi
+
 	trace "truncating trace files. BYE BYE! :)"
-	truncate $TRACE >/dev/null 2>&1
+	truncate --size 0 $TRACE >/dev/null 2>&1
 }
 
 # Start the odoo container, and attaches to it to allow interactive debugging (pdb).
@@ -233,6 +243,45 @@ function stop_docker_on_file_change() {
   done
 }
 
+function stop_odoo() {
+	trace "Stopping odoo server"
+	docker stop "odorun-$DOCKER_HASH" >>$TRACE 2>&1
+}
+
+function stop_database() {
+	trace "Stopping postgres server"
+	docker stop $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
+}
+
+# Create a docker image that contains all the pip dependencies found in requirements.txt
+function create_docker_image() {
+  # If the docker image exists -> skip
+  trace "Scanning if docker exists: odorun-$DOCKER_HASH"
+  if [ $(docker image ls | grep "odorun-$DOCKER_HASH" | wc -l) -eq 1 ]; then
+    trace "Docker image is already available. Skipping build step for docker."
+    return
+  fi
+  trace "Docker image not found. Creating it."
+
+  rm -rf "$DOCKER_BUILD_DIR"
+  mkdir -p "$DOCKER_BUILD_DIR"
+
+  touch "$DOCKER_BUILD_DIR/Dockerfile"
+  echo "FROM $DOCKER_ODOO_IMAGE_NAME" >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "" >>"$DOCKER_BUILD_DIR/Dockerfile"
+
+  cp requirements.txt "$DOCKER_BUILD_DIR"
+  echo "USER root" >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "COPY requirements.txt ." >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "RUN pip3 install -r requirements.txt" >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "USER odoo" >>"$DOCKER_BUILD_DIR/Dockerfile"
+
+  echo "Dockerfile:"
+  cat "$DOCKER_BUILD_DIR/Dockerfile"
+
+  docker build "$DOCKER_BUILD_DIR" -t "odorun-${DOCKER_HASH}"
+}
+
 touch "$TRACE"
 truncate -s 0 "$TRACE"
 trace "---------------------------"
@@ -314,9 +363,9 @@ while getopts "b:dg:hp:rv" opt; do
 
 	r)
 		trace "-r detected. deleting conatiner + networks."
-		echo "Removing postgres and odoo containers used for running tests."
+		echo "Removing docker images + postgres and odoo containers used for running modules."
 		echo "They will be created automatically again when you run $0."
-		delete_containers
+		remove_everything
 		echo "Done."
 		exit 0
 		;;
@@ -379,6 +428,8 @@ trace "DOCKER_NETWORK_FULL_NAME = [$DOCKER_NETWORK_FULL_NAME]"
 trace "DOCKER_PG_FULL_NAME = [$DOCKER_PG_FULL_NAME]"
 trace "DOCKER_ODOO_FULL_NAME = [$DOCKER_ODOO_FULL_NAME]"
 
+create_docker_image
+
 echo "Checking if the user-defined bridge network exists." >>$TRACE
 if [ $(docker network ls | grep "$DOCKER_NETWORK_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the user-defined bridge network."
@@ -400,7 +451,8 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-	command="docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME --interactive --tty $DOCKER_ODOO_IMAGE_NAME --limit-time-real 1800 --limit-time-cpu 1800 -d odoo -u $MODULES -i $MODULES -l en_US --without-demo all" 
+	command="docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME --interactive --tty odorun-$DOCKER_HASH --limit-time-real 1800 --limit-time-cpu 1800 -d odoo -u $MODULES -i $MODULES -l en_US --without-demo all" 
+	#command="docker create -v $(pwd):/mnt/extra-addons -p $PORT:8069 --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME --interactive --tty $DOCKER_ODOO_IMAGE_NAME --limit-time-real 1800 --limit-time-cpu 1800 -d odoo -u $MODULES -i $MODULES -l en_US --without-demo all" 
   echo $command
   $command >>$TRACE 2>&1
 else
@@ -426,6 +478,8 @@ while true; do
   else
     trace "MAIN - no signal file detected - assuming manual stop."
     echo "Manual stop."
+    stop_database
     exit 0
   fi
 done
+
