@@ -2,6 +2,7 @@ from odoo import http
 from odoo.http import request
 import os
 import signal
+from icecream import ic
 
 class TestController(http.Controller):
         @http.route(['/kill'],auth="public")
@@ -10,5 +11,8 @@ class TestController(http.Controller):
 
         @http.route(['/pid'],auth="public")
         def pid(self, **post):
-            return os.getpid()
+            # test array
+            test_array = ['a', 'b', 'c', 'd', 'e']
+            ic(test_array)
+            return f"{os.getpid()}"
 
