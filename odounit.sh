@@ -346,7 +346,7 @@ function calculate_hash() {
 # Create a docker image that contains all the pip dependencies found in requirements.txt
 function create_docker_image() {
   # If the docker image exists -> skip
-  trace "Scanning if docker exists: odounit-$DOCKER_HASH:1"
+  trace "Scanning if docker exists: odounit-$DOCKER_HASH"
   if [ $(docker image ls | grep "odounit-$DOCKER_HASH" | wc -l) -eq 1 ]; then
     trace "Docker image is already available. Skipping build step for docker."
     return
@@ -360,17 +360,16 @@ function create_docker_image() {
   echo "FROM $DOCKER_ODOO_IMAGE_NAME" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "" >>"$DOCKER_BUILD_DIR/Dockerfile"
 
-  # if requirements.txt exists, read it into variable REQUIREMENTS
-  if [ -f "requirements.txt" ]; then
-    trace "Converting requirements.txt into docker RUN pip install statements."
-    cat requirements.txt | awk '{ print gensub(/(.*)/, "RUN python3 -m pip install \\1", "g") }' 
-    cat requirements.txt | awk '{ print gensub(/(.*)/, "RUN python3 -m pip install \\1", "g") }' >>"$DOCKER_BUILD_DIR/Dockerfile"
-  fi
+  cp requirements.txt "$DOCKER_BUILD_DIR"
+  echo "USER root" >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "COPY requirements.txt ." >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "RUN pip3 install -r requirements.txt" >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "USER odoo" >>"$DOCKER_BUILD_DIR/Dockerfile"
 
   echo "Dockerfile:"
   cat "$DOCKER_BUILD_DIR/Dockerfile"
 
-  docker build "$DOCKER_BUILD_DIR" -t "odounit-${DOCKER_HASH}:1"
+  docker build "$DOCKER_BUILD_DIR" -t "odounit-${DOCKER_HASH}"
 }
 
 trace "*** Script starting..."
@@ -553,7 +552,8 @@ fi
 trace "Checking if the odoo docker exists."
 if [ $(docker ps -a | grep "$DOCKER_ODOO_FULL_NAME" | wc -l) -eq 0 ]; then
 	trace "Creating the odoo server to run the tests."
-  command="docker create -v $(pwd):/mnt/extra-addons --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME --tty --interactive $DOCKER_ODOO_IMAGE_NAME --limit-time-real 1800 --limit-time-cpu 1800 -d odoo -u $MODULES -i $MODULES --stop-after-init --without-demo all --test-tags $TEST_TAGS" 
+  command="docker create -v $(pwd):/mnt/extra-addons --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME --tty --interactive odounit-$DOCKER_HASH --limit-time-real 1800 --limit-time-cpu 1800 -d odoo -u $MODULES -i $MODULES --stop-after-init --without-demo all --test-tags $TEST_TAGS" 
+  #command="docker create -v $(pwd):/mnt/extra-addons --name $DOCKER_ODOO_FULL_NAME --network $DOCKER_NETWORK_FULL_NAME -e HOST=$DOCKER_PG_FULL_NAME --tty --interactive $DOCKER_ODOO_IMAGE_NAME --limit-time-real 1800 --limit-time-cpu 1800 -d odoo -u $MODULES -i $MODULES --stop-after-init --without-demo all --test-tags $TEST_TAGS" 
   echo "$command"
 	$command
 else
