@@ -2,7 +2,6 @@ TO DO:
 
 MUST
 
-- [ ] Add support for requirements.txt -> should build a custom docker image with installed dependencies. Hash must include content of requirements.txt.
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
 - [ ] Add smtp4dev to odorun.sh to catch all mails, yet have a functional mail server - and allow for inspecting mails in dev mode.
 
@@ -17,6 +16,7 @@ SHOULD
 - [ ] Add -m for setting the http port for the smtp4dev mail server.
 
 COULD
+- [ ] add option -r to make location of requirements.txt file explicit.
 - [ ] Check that reloading the browser on windows/linux can also be automated in odorun :-)
 
 WILL NOT
@@ -25,6 +25,7 @@ WILL NOT
 
 DONE:
 
+- [x] Add support for requirements.txt -> should build a custom docker image with installed dependencies. Hash must include content of requirements.txt.
 - [x] Stop pg container on CTRL-C (otherwise it keeps running - not stop after test run - for speed)
 - [x] Investigate if Pdb allows PRE / POST handlers to be registered -> disable / enable logging in there?
 - [x] Add support for pdb to odorun (like in odounit)
