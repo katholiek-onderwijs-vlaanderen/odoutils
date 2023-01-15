@@ -343,6 +343,64 @@ function calculate_hash() {
     echo "$hash"
 }
 
+function create_log_suppress_module() {
+  # $1 is the location where you want to create the odoo module 
+  #    that contains the code that does the log suppressions during debugging.
+  
+  trace "Creating log suppression module at $1/log_suppress"
+
+  mkdir "$1/log_suppress"
+  cat >"$1/log_suppress/__init__.py" <<EOT
+import logging
+import sys
+
+def filter_logs_during_debug(record):
+    debugging = False
+    thread_ids = sys._current_frames().keys()
+    for thread_id in thread_ids:
+        frame = sys._current_frames()[thread_id]
+        while frame:
+            code = frame.f_code
+            # if name is 'trace_dispatch' in filename ending in 'bdb.py' than we are in debugging mode.
+            # Unfortunatile threading only adds gettrace() function as of python 3.10.
+            if code.co_name == 'trace_dispatch' and code.co_filename.endswith('bdb.py'):
+                debugging = True
+                break
+            frame = frame.f_back
+
+    return not debugging
+
+root_logger = logging.getLogger()
+handlers = root_logger.handlers
+for handler in handlers:
+    handler.addFilter(filter_logs_during_debug)  
+EOT
+
+  # Write manifest
+  cat >"$1/log_suppress/__manifest__.py" <<EOT
+{
+    'name': 'Log suppress for pdb',
+    'version': '1.0.0',
+    'author': 'Dimitry D hondt',
+    'license': 'LGPL-3',
+    'depends': [
+    ],
+    'summary': "Module that suppresses logging output during debugging sessions.",
+    'description': "Module that suppresses logging output during debugging sessions.",
+    'category': '',
+    'demo': [],
+    'data': [],
+    'installable': True,
+    'application': False,
+    'auto_install': True,
+    'assets': {    },
+    'sequence': 100,
+}
+EOT
+
+  trace "Done creating log suppression module."
+}
+
 # Create a docker image that contains all the pip dependencies found in requirements.txt
 function create_docker_image() {
   # If the docker image exists -> skip
@@ -356,6 +414,8 @@ function create_docker_image() {
   rm -rf "$DOCKER_BUILD_DIR"
   mkdir -p "$DOCKER_BUILD_DIR"
 
+  create_log_suppress_module $DOCKER_BUILD_DIR
+
   touch "$DOCKER_BUILD_DIR/Dockerfile"
   echo "FROM $DOCKER_ODOO_IMAGE_NAME" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "" >>"$DOCKER_BUILD_DIR/Dockerfile"
@@ -363,6 +423,8 @@ function create_docker_image() {
   cp requirements.txt "$DOCKER_BUILD_DIR"
   echo "USER root" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "COPY requirements.txt ." >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "RUN mkdir /usr/lib/python3/dist-packages/odoo/addons/log_suppress" >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "COPY log_suppress/* /usr/lib/python3/dist-packages/odoo/addons/log_suppress/" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "RUN pip3 install -r requirements.txt" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "USER odoo" >>"$DOCKER_BUILD_DIR/Dockerfile"
 

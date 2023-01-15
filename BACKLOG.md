@@ -7,7 +7,6 @@ MUST
 
 SHOULD
 
-- [ ] Encapsulate code to suspend odoo logging during debug in module that is installed.
 - [ ] update code snippet for log suppression to only install filter on appenders that write to STDOUT/STDERR, not to other (file/...) appenders.
 - [ ] Investigate on how to make logging of odoo model objects convenient for logging/debugging.
 - [ ] Investigate icecream package for logging execution / data of code.
@@ -24,6 +23,7 @@ WILL NOT
 
 DONE:
 
+- [x] Encapsulate code to suspend odoo logging during debug in module that is installed.
 - [x] remove dependencies check if running in plain mode -> should not complain about figlet / tput / .. not being installed.
 - [x] Add support for requirements.txt -> should build a custom docker image with installed dependencies. Hash must include content of requirements.txt.
 - [x] Stop pg container on CTRL-C (otherwise it keeps running - not stop after test run - for speed)
