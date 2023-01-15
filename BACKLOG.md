@@ -3,11 +3,10 @@ TO DO:
 MUST
 
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
-- [ ] Add smtp4dev to odorun.sh to catch all mails, yet have a functional mail server - and allow for inspecting mails in dev mode.
+- [ ] Add smtp4dev to odorun.sh to catch all mails, yet hae a functional mail server - and allow for inspecting mails in dev mode.
 
 SHOULD
 
-- [ ] update code snippet for log suppression to only install filter on appenders that write to STDOUT/STDERR, not to other (file/...) appenders.
 - [ ] Investigate on how to make logging of odoo model objects convenient for logging/debugging.
 - [ ] Investigate icecream package for logging execution / data of code.
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
@@ -20,6 +19,7 @@ WILL NOT
 - [ ] add -a option to auto-install dependencies in automation context?
 - [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
 - [ ] Check that reloading the browser on windows/linux can also be automated in odorun :-)
+- [ ] update code snippet for log suppression to only install filter on appenders that write to STDOUT/STDERR, not to other (file/...) appenders.
 
 DONE:
 
