@@ -173,7 +173,7 @@ Remove the `breakpoint()` statement from your code if you are done debugging :-)
 Being able to enter the debugger in a specific point of your code is also convenient
 if you want to try out some statements interactively. This can be a great help during development.
 
-During debugging of the odoo server any logging output is suspended temporarily.
+During debugging of the odoo modules any logging output is suspended temporarily.
 
 For debugging purposes - `odorun.sh` the cli options `--limit-time-real` and `--limit-time-cpu` have been set high (30 minutes).
 
