@@ -374,16 +374,6 @@ function create_docker_image() {
 
 trace "*** Script starting..."
 
-# Check if all dependencies are installed..
-trace "Verifying that figlet is installed."
-command -v figlet >>$TRACE 2>&1 || please_install figlet figlet
-trace "Verifying that docker is installed."
-command -v docker >>$TRACE 2>&1 || please_install docker docker.io
-trace "Verifying that tput is installed."
-command -v tput >>$TRACE 2>&1 || please_install tput ncurses-bin
-trace "Verifying that inotifywait is installed."
-command -v inotifywait >>$TRACE 2>&1 || please_install inotifywait inotify-tools
-
 # If we are running on WSL, check that the docker command
 trace "Verifying that docker command is available."
 # is telling us to start the docker engine via the UI...
@@ -508,6 +498,19 @@ else
 fi
 
 trace "Finished parsing of command line."
+
+# Check if all dependencies are installed..
+trace "Verifying that figlet is installed."
+[ "$PLAIN" -eq 0 ] && (command -v figlet >>$TRACE 2>&1 || please_install figlet figlet)
+
+trace "Verifying that tput is installed."
+[ "$PLAIN" -eq 0 ] && (command -v tput >>$TRACE 2>&1 || please_install tput ncurses-bin)
+
+trace "Verifying that docker is installed."
+command -v docker >>$TRACE 2>&1 || please_install docker docker.io
+
+trace "Verifying that inotifywait is installed."
+[ "$ONCE" -eq 0 ] && (command -v inotifywait >>$TRACE 2>&1 || please_install inotifywait inotify-tools)
 
 # Log all variables for debugging purposes.
 trace "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME"

@@ -11,20 +11,20 @@ SHOULD
 - [ ] update code snippet for log suppression to only install filter on appenders that write to STDOUT/STDERR, not to other (file/...) appenders.
 - [ ] Investigate on how to make logging of odoo model objects convenient for logging/debugging.
 - [ ] Investigate icecream package for logging execution / data of code.
-- [ ] remove dependencies check if running in plain mode -> should not complain about figlet / tput / .. not being installed.
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
 - [ ] Add -m for setting the http port for the smtp4dev mail server.
 
 COULD
 - [ ] add option -r to make location of requirements.txt file explicit.
-- [ ] Check that reloading the browser on windows/linux can also be automated in odorun :-)
 
 WILL NOT
 - [ ] add -a option to auto-install dependencies in automation context?
 - [ ] Add -q (quiet) flag to suppress output for odorun and odounit.
+- [ ] Check that reloading the browser on windows/linux can also be automated in odorun :-)
 
 DONE:
 
+- [x] remove dependencies check if running in plain mode -> should not complain about figlet / tput / .. not being installed.
 - [x] Add support for requirements.txt -> should build a custom docker image with installed dependencies. Hash must include content of requirements.txt.
 - [x] Stop pg container on CTRL-C (otherwise it keeps running - not stop after test run - for speed)
 - [x] Investigate if Pdb allows PRE / POST handlers to be registered -> disable / enable logging in there?
