@@ -420,12 +420,12 @@ function create_docker_image() {
   echo "FROM $DOCKER_ODOO_IMAGE_NAME" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "" >>"$DOCKER_BUILD_DIR/Dockerfile"
 
-  cp requirements.txt "$DOCKER_BUILD_DIR"
+  [ -f requirements.txt ] && cp requirements.txt "$DOCKER_BUILD_DIR"
   echo "USER root" >>"$DOCKER_BUILD_DIR/Dockerfile"
-  echo "COPY requirements.txt ." >>"$DOCKER_BUILD_DIR/Dockerfile"
+  [ -f requirements.txt ] && echo "COPY requirements.txt ." >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "RUN mkdir /usr/lib/python3/dist-packages/odoo/addons/log_suppress" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "COPY log_suppress/* /usr/lib/python3/dist-packages/odoo/addons/log_suppress/" >>"$DOCKER_BUILD_DIR/Dockerfile"
-  echo "RUN pip3 install -r requirements.txt" >>"$DOCKER_BUILD_DIR/Dockerfile"
+  [ -f requirements.txt ] && echo "RUN pip3 install -r requirements.txt" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "USER odoo" >>"$DOCKER_BUILD_DIR/Dockerfile"
 
   echo "Dockerfile:"

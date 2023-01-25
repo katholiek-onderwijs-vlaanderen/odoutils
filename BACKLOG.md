@@ -2,7 +2,6 @@ TO DO:
 
 MUST
 
-- [ ] Handle missing requirements.txt
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
 - [ ] Add smtp4dev to odorun.sh to catch all mails, yet hae a functional mail server - and allow for inspecting mails in dev mode.
 
@@ -24,6 +23,7 @@ WILL NOT
 DONE:
 
 - [x] Investigate icecream package for logging execution / data of code.
+- [x] Handle missing requirements.txt
 - [x] Encapsulate code to suspend odoo logging during debug in module that is installed.
 - [x] remove dependencies check if running in plain mode -> should not complain about figlet / tput / .. not being installed.
 - [x] Add support for requirements.txt -> should build a custom docker image with installed dependencies. Hash must include content of requirements.txt.
