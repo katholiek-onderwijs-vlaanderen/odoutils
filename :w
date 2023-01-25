@@ -16,7 +16,7 @@ class test_test(TransactionCase):
         self.assertTrue(True)
 
     def test_ice_cream_dependency(self):
-        ic()
+        ic(copy)
         test_array = ['a', 'b', 'c', 'd', 'e']
         copy = test_array.copy()
         ic(copy)

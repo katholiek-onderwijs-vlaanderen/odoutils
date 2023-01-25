@@ -1,0 +1,4 @@
+{
+    "ignore": [ "**/*.py" ],
+    "extraPaths": ["/home/codehawk/prj/odoo"]
+}

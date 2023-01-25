@@ -583,6 +583,8 @@ trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 REQUIREMENTS_TXT=""
 if [ -f "requirements.txt" ]; then
   REQUIREMENTS_HASH=$(cat requirements.txt | md5sum | awk 'BEGIN {IFS="\t"} { print $1 }')
+else
+  REQUIREMENTS_HASH=""
 fi
 DOCKER_HASH=$(echo "$REQUIREMENTS_HASH" "$MODULES" "$TEST_TAGS" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" | md5sum | cut -d ' ' -f1)
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
