@@ -5,7 +5,7 @@
 set -eu
 
 # Version of the script
-SCRIPT_VERSION=0.9
+SCRIPT_VERSION=0.9.0.1
 
 # Temp file where the output of the docker running the test suite is stored.
 LOG=/tmp/odounit-odoo-container.log
