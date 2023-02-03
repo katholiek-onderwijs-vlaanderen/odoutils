@@ -224,7 +224,7 @@ function run_tests {
 		LAST_RUN_FAILED=1
 
 		if [ "$PLAIN" -eq 0 ]; then
-			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 1)"
+			echo -n "$(tput bold)$(tput setaf 15)$(tput setab 1)"
 		fi
 
 		trace "Displaying FAILED message."
@@ -250,7 +250,7 @@ function run_tests {
 		trace "Errors other than FAIL detected.."
 
 		if [ "$PLAIN" -eq 0 ]; then
-			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 4)"
+			echo -n "$(tput bold)$(tput setaf 15)$(tput setab 4)"
 		fi
 
     big_text "Unknown"
@@ -260,7 +260,7 @@ function run_tests {
 	else
 		LAST_RUN_FAILED=0
 		if [ "$PLAIN" -eq 0 ]; then
-			echo -n "$(tput bold)$(tput setaf 7)$(tput setab 2)"
+			echo -n "$(tput bold)$(tput setaf 15)$(tput setab 2)"
 		fi
 
 		trace "Displaying SUCCESS message."
