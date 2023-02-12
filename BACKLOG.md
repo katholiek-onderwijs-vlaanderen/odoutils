@@ -13,6 +13,7 @@ SHOULD
 
 COULD
 - [ ] add option -r to make location of requirements.txt file explicit.
+- [ ] add support for automatically pruning old containers/images/volumes/networks
 
 WILL NOT
 - [ ] add -a option to auto-install dependencies in automation context?
@@ -22,6 +23,7 @@ WILL NOT
 
 DONE:
 
+- [x] Add support for pruning unused images and volumes.
 - [x] Investigate icecream package for logging execution / data of code.
 - [x] Handle missing requirements.txt
 - [x] Encapsulate code to suspend odoo logging during debug in module that is installed.

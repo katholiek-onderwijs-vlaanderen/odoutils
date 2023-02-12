@@ -174,14 +174,14 @@ function big_text {
 function remove_everything {
 	if [ $(docker ps -a | grep "$DOCKER_ODOO" | wc -l) -gt 0 ]; then
 		trace "Deleting all odoo containers."
-		docker rm -f $(docker ps -a | grep "$DOCKER_ODOO" | cut -f 1 -d ' ') >>$TRACE
+		docker rm -v -f $(docker ps -a | grep "$DOCKER_ODOO" | cut -f 1 -d ' ') >>$TRACE
 	else
 		trace "No odoo containers found to delete."
 	fi
 
 	if [ $(docker ps -a | grep "$DOCKER_PG" | wc -l) -gt 0 ]; then
 		trace "Deleting all pg containers."
-		docker rm -f $(docker ps -a | grep "$DOCKER_PG" | cut -f 1 -d ' ') >>$TRACE
+    docker rm -v -f $(docker ps -a | grep "$DOCKER_PG" | cut -f 1 -d ' ') >>$TRACE
 	else
 		trace "No pg containers found to delete."
 	fi
