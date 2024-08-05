@@ -428,6 +428,9 @@ function create_docker_image() {
   [ -f requirements.txt ] && echo "RUN pip3 install -r requirements.txt" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "USER odoo" >>"$DOCKER_BUILD_DIR/Dockerfile"
 
+  echo "ENV VERLOF_APP_USERNAME=$VERLOF_APP_USERNAME" >>"$DOCKER_BUILD_DIR/Dockerfile"
+  echo "ENV VERLOF_APP_PASSWORD=$VERLOF_APP_PASSWORD" >>"$DOCKER_BUILD_DIR/Dockerfile"
+
   echo "Dockerfile:"
   cat "$DOCKER_BUILD_DIR/Dockerfile"
 
