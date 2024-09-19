@@ -202,29 +202,6 @@ After issuing `c` to continue execution, the server output logging is resumed:
 
 ![odoo-continued](/docs/odoo-continued.png)
 
-# Verlof app account
-
-To run tests related to the Core Data, we need to have a authenticated connection with KOV API.
-Set the following env vars in your OS:
-```
-export VERLOF_APP_USERNAME=
-export VERLOF_APP_PASSWORD=
-```
-
-Make sure to rebuild the docker image you should see the following message:
-```
-Will run all tests in installed modules [verlof].
-Dockerfile:
-FROM odoo:15
-
-USER root
-RUN mkdir /usr/lib/python3/dist-packages/odoo/addons/log_suppress
-COPY log_suppress/* /usr/lib/python3/dist-packages/odoo/addons/log_suppress/
-USER odoo
-ENV VERLOF_APP_USERNAME=
-ENV VERLOF_APP_PASSWORD=
-```
-
 # Contributing & Technical Documentation
 
 A *high-level overview* of the technical design for `odounit.sh` is [described here](/docs/TECH_OVERVIEW_ODOUNIT.md).
