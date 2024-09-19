@@ -63,13 +63,13 @@ It uses docker containers to isolate the entire process of running the tests fro
 | ------ | ----------- |
 | `-g`   | Select the odoo version you want the test suite to run on. Tested with odoo 14, 15 and 16.<br/> Depending on the odoo version, a fitting postgres image will be used for the database container. The pg version used is the one advised in the odoo [developer's documentation](https://www.odoo.com/documentation/master/administration/install/install.html#postgresql). |
 | `-h`   | Displays help message. |
-| `-i`   | Module(s) to install. Comma separated list. If no module is given, the [module_to_test] on the command line will be installed. |
 | `-i`   | Install one or more additional modules from the current folder. Comma separated list. The additional modules will be installed before the tests are run. |
 | `-o`   | Run test suite once. Do not enter loop to re-run test suite on file change. |
 | `-p`   | Do not output in color. Do not clear screen. |
 | `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the tests next time.<br/> The exit code is 0, also when nothing was deleted. |
 | `-t`   | Allow you to override the --test-tags with a custom value. Useful for test isolation. See command line documentation of odoo for syntax. |
 | `-v`   | Displays the script version number. |
+
 
 
 ### Exit codes:
@@ -131,6 +131,8 @@ The script uses docker containers to isolate the entire process of running the o
 | `-p`   | Set the HTTP port to run the odoo server on. Default: 8069. |
 | `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the module next time.<br/> The exit code is 0, also when nothing was deleted. |
 | `-v`   | Displays the script version number. |
+| `-e`   | Set environment variables in the odoo container. Comma separated list. |
+| `-d`   | Output extra logging for debugging the script. |
 
 At the moment the postgres port is exposed on port 5433. Will make this an option in the future.
 

@@ -43,6 +43,10 @@ PORT=8069
 # Can be set using the -b flag.
 PG_PORT=
 
+# List of environment variables to import into the container.
+# default: None.
+ENV_VARS=
+
 function trace() {
 	echo "$1" >>"$TRACE" 2>&1
 }
@@ -66,7 +70,7 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [-d] odoo_module_name1 [odoo_module_name2]"
+	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [-d] [-e] odoo_module_name1 [odoo_module_name2]"
 }
 
 function help_message {
@@ -81,6 +85,8 @@ function help_message {
 	echo "    -g    Selects the odoo version to run. Tested with: 14,15 and 16. Default: 15."
 	echo
 	echo "    -h    Displays this help message."
+	echo 
+	echo "    -i    Install one or more additional modules from the current folder. Comma separated list."
 	echo
 	echo "    -p    Sets the port on which the odoo server will be reachable. Default: 8069."
 	echo
@@ -89,8 +95,14 @@ function help_message {
 	echo "          The exit code is 0, also when nothing was deleted."
 	echo
 	echo "    -v    Displays the version of the script."
+  echo
+  echo "    -e    Comma separated of environment variables to import into the container."
+  echo "          Example: $0 -e MY_ENV_VAR1,VAR2 mymodule_to_run"
+  echo "          This will set the environment variables MY_ENV_VAR1 and VAR2 in the odoo container to the current value."
+  echo "          Do mind that the variable values will be fixed, and only updated after rebuilding the docker image."
+  echo "          You can use $0 -r to remove the docker image. After this a full rebuild will be done when starting odorun."
 	echo
-	echo
+  echo
 	echo "    -d    Trace the script for debugging purposes."
 	echo "          Run the script itself first in a separate terminal session, then $0 -d to trace it."
 	echo
@@ -134,12 +146,12 @@ function remove_everything {
 		trace "No bridge networks found to delete."
 	fi
 
-  if [ $(docker image ls | grep "^odorun-" | wc -l) -gt 0 ]; then
-    trace "Deleting odorun images."
-    docker image rm $(docker image ls | awk 'BEGIN {IFS="\t"} $0 ~ /^odorun-/ { print $1 ":" $2 }') >>$TRACE
-  else
-    trace "No odorun images found to delete."
-  fi
+	if [ $(docker image ls | grep "^odorun-" | wc -l) -gt 0 ]; then
+		trace "Deleting odorun images."
+		docker image rm $(docker image ls | awk 'BEGIN {IFS="\t"} $0 ~ /^odorun-/ { print $1 ":" $2 }') >>$TRACE
+	else
+		trace "No odorun images found to delete."
+	fi
 
 	trace "truncating trace files. BYE BYE! :)"
 	truncate --size 0 $TRACE >/dev/null 2>&1
@@ -150,14 +162,14 @@ function run_server_interactive {
 	trace "RUN - Running server."
 
 	timestamp=$(date --rfc-3339=seconds | sed "s/ /T/")
-  trace "RUN - Timestamp when we are (re)starting: $timestamp"
+	trace "RUN - Timestamp when we are (re)starting: $timestamp"
 	trace "RUN - (Re)starting the odoo server to run the module."
 	docker restart $DOCKER_ODOO_FULL_NAME >>$TRACE 2>&1
-  trace "RUN - (Re)start command done."
+	trace "RUN - (Re)start command done."
 
 	trace "RUN - Attaching to docker."
 	docker attach $DOCKER_ODOO_FULL_NAME
-  trace "RUN - docker attach command exited."
+	trace "RUN - docker attach command exited."
 	#docker logs -f --since $timestamp $DOCKER_ODOO_FULL_NAME &
 }
 
@@ -313,6 +325,11 @@ EOT
 
 # Create a docker image that contains all the pip dependencies found in requirements.txt
 function create_docker_image() {
+  # If no requirements.txt file found, create an empty one.
+  if [ ! -f requirements.txt ]; then
+    touch requirements.txt
+  fi
+
   # If the docker image exists -> skip
   trace "Scanning if docker exists: odorun-$DOCKER_HASH"
   if [ $(docker image ls | grep "odorun-$DOCKER_HASH" | wc -l) -eq 1 ]; then
@@ -337,6 +354,24 @@ function create_docker_image() {
   echo "COPY log_suppress/* /usr/lib/python3/dist-packages/odoo/addons/log_suppress/" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "RUN pip3 install -r requirements.txt" >>"$DOCKER_BUILD_DIR/Dockerfile"
   echo "USER odoo" >>"$DOCKER_BUILD_DIR/Dockerfile"
+
+  # Include the environment variables in the docker image.
+  # ENV_VARS contains a comma-separated list of environment variables to import into the container.
+  # For each item in the comma-separated list, we will add an ENV instruction to the Dockerfile.
+  if [ "$ENV_VARS" != "" ]; then
+    trace "Adding environment variables to the docker image."
+    IFS=',' read -ra ENV_VARS_ARRAY <<<"$ENV_VARS"
+    echo "ENV_VARS_ARRAY = [${ENV_VARS_ARRAY[@]}]"
+    for x in "${ENV_VARS_ARRAY[@]}"; do
+      echo $x
+      if [[ -z ${!x+x} ]]; then
+          echo "Variable $x is not present in the environment. Exiting."
+          exit 1
+      else
+          echo "ENV $x=${!x}" >>"$DOCKER_BUILD_DIR/Dockerfile"
+      fi
+    done
+  fi
 
   echo "Dockerfile:"
   cat "$DOCKER_BUILD_DIR/Dockerfile"
@@ -380,7 +415,7 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "b:dg:hp:rv" opt; do
+while getopts "b:dg:hp:rve:" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
   b)
@@ -432,6 +467,12 @@ while getopts "b:dg:hp:rv" opt; do
 		exit 0
 		;;
 
+  e) 
+    trace "-e detected. Will copy the current value of the specified environment variables into the odoo container."
+    ENV_VARS=$OPTARG
+    trace "Environment variables to set in the odoo container: [$ENV_VARS]"
+    ;;
+
 	v)
 		echo "Script version: $SCRIPT_VERSION"
 		exit 0
@@ -479,7 +520,7 @@ trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
 trace "Current DOCKER_NETWORK=$DOCKER_NETWORK"
 
 # Calculate full names for containers and network bridge
-DOCKER_HASH=$(echo "$PG_PORT" "$PORT" "$MODULES" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" "$SCRIPT_VERSION" | md5sum | cut -d ' ' -f1)
+DOCKER_HASH=$(echo "$PG_PORT" "$PORT" "$MODULES" "$DOCKER_ODOO_IMAGE_NAME" "$DOCKER_PG_IMAGE_NAME" "$SCRIPT_VERSION" "$ENV_VARS" | md5sum | cut -d ' ' -f1)
 
 DOCKER_NETWORK_FULL_NAME="$DOCKER_NETWORK-$DOCKER_HASH"
 DOCKER_PG_FULL_NAME="$DOCKER_PG-$DOCKER_HASH"
