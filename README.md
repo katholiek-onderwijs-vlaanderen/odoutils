@@ -112,7 +112,7 @@ in that folder will be added to the docker image where odounit runs the unit tes
 
 ## odorun.sh
 
-`Usage: ./odorun.sh [-h | -r] [-b] [-p] [-o] [-g] [odoo_module_name]`
+`Usage: ./odorun.sh [-b ] [-g] [-h] [-p] [-r] [-e] [-v] [-d] odoo_module_name1 [odoo_module_name2]`
 
 `./odorun.sh` is a module runner for development. It allows you to fire up a fresh odoo container with a single command. It is designed to take care of module reloading, upgrading, etc.. Simply fire it up, develop your module, and then check result by hitting the refresh button on your browser. Restarts the odoo server and re-installs the module whenever a file was changed in your module's folder.
 
@@ -127,11 +127,10 @@ The script uses docker containers to isolate the entire process of running the o
 | `-b`   | Sets the port on which the postgres server will be reachable. Default: not exposed. |
 | `-g`   | Select the odoo version you want run the module on. Tested with odoo 14, 15 and 16.<br/> Depending on the odoo version, a fitting postgres image will be used for the database container. The pg version used is the one advised in the odoo [developer's documentation](https://www.odoo.com/documentation/master/administration/install/install.html#postgresql). Default: 15 |
 | `-h`   | Displays a help message. |
-| `-i`   | Install one or more additional modules from the current folder. Comma separated list. |
 | `-p`   | Set the HTTP port to run the odoo server on. Default: 8069. |
 | `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the module next time.<br/> The exit code is 0, also when nothing was deleted. |
-| `-v`   | Displays the script version number. |
 | `-e`   | Set environment variables in the odoo container. Comma separated list. |
+| `-v`   | Displays the script version number. |
 | `-d`   | Output extra logging for debugging the script. |
 
 At the moment the postgres port is exposed on port 5433. Will make this an option in the future.

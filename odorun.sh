@@ -70,7 +70,7 @@ function please_install {
 }
 
 function usage_message {
-	echo "Usage: $0 [-h | -t | -r] [-p] [-o] [-g] [-a] [-d] [-e] odoo_module_name1 [odoo_module_name2]"
+	echo "Usage: $0 [-b ] [-g] [-h] [-p] [-r] [-e] [-v] [-d] odoo_module_name1 [odoo_module_name2]"
 }
 
 function help_message {
@@ -86,22 +86,21 @@ function help_message {
 	echo
 	echo "    -h    Displays this help message."
 	echo 
-	echo "    -i    Install one or more additional modules from the current folder. Comma separated list."
-	echo
 	echo "    -p    Sets the port on which the odoo server will be reachable. Default: 8069."
 	echo
 	echo "    -r    Delete the database and odoo containers, as well as the bridge network between them."
 	echo "          The containers and network will be re-created when you run the tests next time."
 	echo "          The exit code is 0, also when nothing was deleted."
 	echo
-	echo "    -v    Displays the version of the script."
-  echo
   echo "    -e    Comma separated of environment variables to import into the container."
   echo "          Example: $0 -e MY_ENV_VAR1,VAR2 mymodule_to_run"
   echo "          This will set the environment variables MY_ENV_VAR1 and VAR2 in the odoo container to the current value."
   echo "          Do mind that the variable values will be fixed, and only updated after rebuilding the docker image."
   echo "          You can use $0 -r to remove the docker image. After this a full rebuild will be done when starting odorun."
 	echo
+  echo
+	echo "    -v    Displays the version of the script."
+  echo
   echo
 	echo "    -d    Trace the script for debugging purposes."
 	echo "          Run the script itself first in a separate terminal session, then $0 -d to trace it."
@@ -422,12 +421,6 @@ while getopts "b:dg:hp:rve:" opt; do
     PG_PORT=$OPTARG
     ;;
 
-	d)
-		touch "$TRACE"
-		tail -f "$TRACE"
-		exit 0
-		;;
-
 	g)
 		trace "-g detected."
 		VERSION=$OPTARG
@@ -473,10 +466,20 @@ while getopts "b:dg:hp:rve:" opt; do
     trace "Environment variables to set in the odoo container: [$ENV_VARS]"
     ;;
 
+
+
 	v)
 		echo "Script version: $SCRIPT_VERSION"
 		exit 0
 		;;
+
+	d)
+		touch "$TRACE"
+		tail -f "$TRACE"
+		exit 0
+		;;
+
+
 
 	*)
 		trace "Error during parsing of command line parameters."
