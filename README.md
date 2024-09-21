@@ -44,7 +44,7 @@ alias odounit='~/odoutils/odounit.sh'
 
 In order for odoutils to function we will need to install both docker and the GNU command line utilities (using homebrew).
 
-Make sure you have Docker installed. If not install it using the Docker Desktop client, or alternatively install `colima`.
+Make sure you have Docker installed. If not install it using the Docker Desktop client, or an alternative installation method.
 
 Check docker is installed and docker services are up and running:
 
