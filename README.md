@@ -40,6 +40,47 @@ alias odorun='~/odoutils/odorun.sh'
 alias odounit='~/odoutils/odounit.sh'
 ```
 
+### Installing on macOS
+
+In order for odoutils to function we will need to install both docker and the GNU command line utilities (using homebrew).
+
+Make sure you have Docker installed. If not install it using the Docker Desktop client, or alternatively install `colima`.
+
+Check docker is installed and docker services are up and running:
+
+```
+% docker run hello-world
+```
+
+install brew package manager. See https://brew.sh
+
+Don't forget to execute the commands at the end of the install as instructed:
+
+```
+% (echo; echo 'eval "$(/usr/local/bin/brew shellenv)"') >> /users/your_user_name/.zprofile
+% eval "$(/usr/local/bin/brew shellenv)"
+```
+
+Next, install the core GNU tools:
+
+`% brew install coreutils`
+
+Don't forget t extend the `PATH` variable as instructed at the end of the install:
+
+```
+% PATH="/usr/local/opt/coreutils/libexec/gnubin:$PAH"
+```
+
+This will add the GNU binaries to your path and give them priority over macOS built-in commands, ensuring compatibility for the odoutils scripts.
+
+The command given above does that for your *current* zsh session.
+Ensure that you don't forget to do this in a new zsh terminal session, or add this to your zsh configuration.
+
+```
+% brew install wget
+```
+
+Next download both scripts, make them executable and add them to your path, as shown above in the linux installation instructions.
 
 ## odounit.sh
 
