@@ -52,7 +52,7 @@ Check docker is installed and docker services are up and running:
 % docker run hello-world
 ```
 
-Install brew package manager. See https://brew.sh
+Install the homebrew package manager. See https://brew.sh
 
 Next, install the core GNU tools:
 
