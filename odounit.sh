@@ -75,16 +75,15 @@ function please_install {
 	echo " - figlet"
 	echo " - tput (from package ncurses-bin)"
 	echo " - docker (from docker.io)"
-	echo " - inotifywait (from inotify-tools)."
 	echo
 	echo "Please install them."
 	echo
 	echo "On Ubuntu for example:"
 	echo
-	echo "$ sudo apt-get install figlet ncurses-bin docker.io inotify-tools"
+	echo "$ sudo apt-get install figlet ncurses-bin docker.io"
 	echo
-	echo "In the above docker.io is the default docker package that is bundled with ubuntu."
-	echo "If you want a more recent version please follow the instructions on the docker website."
+	echo "% brew install --cask docker"
+	echo "% brew install figlet ncurses"
 	echo
 	exit 1
 }
@@ -571,9 +570,6 @@ trace "Verifying that tput is installed."
 trace "Verifying that docker is installed."
 command -v docker >>$TRACE 2>&1 || please_install docker docker.io
 
-trace "Verifying that inotifywait is installed."
-[ "$ONCE" -eq 0 ] && (command -v inotifywait >>$TRACE 2>&1 || please_install inotifywait inotify-tools)
-
 # Log all variables for debugging purposes.
 trace "Current DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_NAME"
 trace "Current DOCKER_PG_IMAGE_NAME=$DOCKER_PG_IMAGE_NAME"
@@ -645,7 +641,7 @@ if [ "$ONCE" -eq 0 ]; then
     fi
 
     if [ "$(calculate_hash)" == "$CURRENT_HASH" ]; then
-			inotifywait -r -q -e modify,move,create,delete,attrib . 
+      sleep 1
     fi
 	done
 else

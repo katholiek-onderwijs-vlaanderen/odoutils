@@ -55,17 +55,17 @@ function please_install {
 	echo "This script requires these command to run:"
 	echo
 	echo " - docker (from docker.io)"
-	echo " - inotifywait (from inotify-tools)."
 	echo
 	echo "Please install them."
 	echo
 	echo "On Ubuntu for example:"
 	echo
-	echo "$ sudo apt-get install docker.io inotify-tools"
+	echo "$ sudo apt-get install docker.io"
 	echo
-	echo "In the above docker.io is the default docker package that is bundled with ubuntu."
-	echo "If you want a more recent version please follow the instructions on the docker website."
-	echo
+  echo "On Mac, you can use brew (or an alternative method):"
+  echo
+  echo "$ brew install --cask docker"
+  echo 
 	exit 1
 }
 
@@ -247,9 +247,7 @@ function stop_docker_on_file_change() {
 
     # Check that parent process is still active
     if [ "$(calculate_hash)" == "$CURRENT_HASH" ]; then
-      trace "STOP - No changes detected. Waiting on filesystem changes via inotifywait.."
-      inotifywait -r -q -e modify,move,create,delete,attrib . >>"$TRACE" 2>&1
-      trace "STOP - inotifywait done"
+      sleep 1
     fi
   done
 }
@@ -387,8 +385,6 @@ trace "---------------------------"
 # Check if all dependencies are installed..
 trace "Verifying that docker is installed."
 command -v docker >>$TRACE 2>&1 || please_install docker docker.io
-trace "Verifying that inotifywait is installed."
-command -v inotifywait >>$TRACE 2>&1 || please_install inotifywait inotify-tools
 
 # If we are running on WSL, check that the docker command
 trace "Verifying that docker command is available."
