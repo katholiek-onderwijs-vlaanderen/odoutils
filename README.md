@@ -54,13 +54,6 @@ Check docker is installed and docker services are up and running:
 
 install brew package manager. See https://brew.sh
 
-Don't forget to execute the commands at the end of the install as instructed:
-
-```
-% (echo; echo 'eval "$(/usr/local/bin/brew shellenv)"') >> /users/your_user_name/.zprofile
-% eval "$(/usr/local/bin/brew shellenv)"
-```
-
 Next, install the core GNU tools:
 
 `% brew install coreutils`
