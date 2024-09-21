@@ -70,7 +70,7 @@ function ctrl_c() {
 }
 
 function please_install {
-	echo "This script requires these command to run:"
+	echo "$0 requires these command to run:"
 	echo
 	echo " - figlet"
 	echo " - tput (from package ncurses-bin)"
@@ -81,6 +81,8 @@ function please_install {
 	echo "On Ubuntu for example:"
 	echo
 	echo "$ sudo apt-get install figlet ncurses-bin docker.io"
+	echo
+	echo "On MacOS for example:"
 	echo
 	echo "% brew install --cask docker"
 	echo "% brew install figlet ncurses"
