@@ -360,7 +360,6 @@ function create_docker_image() {
     IFS=',' read -ra ENV_VARS_ARRAY <<<"$ENV_VARS"
     echo "ENV_VARS_ARRAY = [${ENV_VARS_ARRAY[@]}]"
     for x in "${ENV_VARS_ARRAY[@]}"; do
-      echo $x
       if [[ -z ${!x+x} ]]; then
           echo "Variable $x is not present in the environment. Exiting."
           exit 1
