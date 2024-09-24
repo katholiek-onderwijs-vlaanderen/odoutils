@@ -370,8 +370,8 @@ function create_docker_image() {
     done
   fi
 
-  echo "Dockerfile:"
-  cat "$DOCKER_BUILD_DIR/Dockerfile"
+  # No longer showing docker file, as it could reveal sensitive information, like
+  # environment variables that are used to pass in system account passwords.
 
   docker build "$DOCKER_BUILD_DIR" -t "odorun-${DOCKER_HASH}"
 }
