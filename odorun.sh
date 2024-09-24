@@ -372,8 +372,9 @@ function create_docker_image() {
 
   # No longer showing docker file, as it could reveal sensitive information, like
   # environment variables that are used to pass in system account passwords.
-
-  docker build "$DOCKER_BUILD_DIR" -t "odorun-${DOCKER_HASH}"
+  echo "Building docker image."
+  # No longer showing output of docker build, as it could reveal sensitive information, same as above.
+  docker build "$DOCKER_BUILD_DIR" -t "odorun-${DOCKER_HASH}" >/dev/null 2>&1
 }
 
 touch "$TRACE"
