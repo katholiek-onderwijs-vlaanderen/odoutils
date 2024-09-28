@@ -34,6 +34,11 @@ ONCE=0
 # PLAIN=0 -> Output in interactive mode with screen clear and color.
 # PLAIN=1 -> Do not clear the screen, and do not use ANSI escape codes to add colors to the output.
 PLAIN=0
+# Run in flaky test destection mode. Loop until a test fails, then stop.
+FLAKY=0
+
+# Set to 1 as soon as user hits CTRL_C.
+STOP_ISSUED=0
 
 # Did the last run of the test suite fail? 0: All tests passed, 1: At least one test failed, 2: Some other (unknown error) occured.
 # -1 if test suite was not yet run.
@@ -55,16 +60,20 @@ function stop_database() {
 
 # Stop both database and odoo docker (database first)
 function stop_containers() {
-  stop_database
-  stop_odoo
+    stop_database
+    stop_odoo
 }
 
 function ctrl_c_once() {
-  stop_containers
+	STOP_ISSUED=1
+
+    stop_containers
 	exit 0
 }
 
 function ctrl_c() {
+	STOP_ISSUED=1
+
 	echo $(tput sgr 0)
 	ctrl_c_once
 }
@@ -121,8 +130,10 @@ function help_message {
     echo "    -t    Specify the tests to run (default is all tests in all installed modules) manually. "
     echo "          Uses the same syntax as --test-tags in odoo command line."
 	echo
-	echo "    -v    Displays the version of the script."
+	echo "    -f    Detect flaky tests. Run test suite until a test fails, then stop."
 	echo
+	echo
+	echo "    -v    Displays the version of the script."
 	echo
 	echo "    -d    Trace the script for debugging purposes."
 	echo "          Run the script itself first in a separate terminal session, then $0 -d to trace it."
@@ -144,7 +155,7 @@ function help_message {
 	echo "Delete all containers and log files (by default containers are created and then reused for speed):"
 	echo "$ $0 -r"
 	echo
-  echo "Run test suite for module_A and module_B (both modules will be installed and tests for both will be run):"
+    echo "Run test suite for module_A and module_B (both modules will be installed and tests for both will be run):"
 	echo "$ $0 module_A module_B"
 }
 
@@ -461,7 +472,7 @@ fi
 
 trace "Starting parse of command line."
 
-while getopts "dg:hoprt:v" opt; do
+while getopts "dg:hoprt:fv" opt; do
 	trace "Parsing option [$opt] now:"
 	case $opt in
 	d)
@@ -516,6 +527,11 @@ while getopts "dg:hoprt:v" opt; do
 	t)
 		TEST_TAGS=$OPTARG
     trace "Will run with --test-tags $TEST_TAGS"
+		;;
+
+	f)
+		FLAKY=1
+		trace "Will run in flaky mode: loop until one failing test is found."
 		;;
 
 	v)
@@ -629,29 +645,39 @@ fi
 trace "Starting the postgres server."
 docker start $DOCKER_PG_FULL_NAME >>$TRACE 2>&1
 
-if [ "$ONCE" -eq 0 ]; then
-	# Set handling of CTRL-C to allow the user to stop the loop.
-	trap ctrl_c INT
-
-  CURRENT_HASH=$(calculate_hash)
-  run_tests
-
-	while true; do
-    if [ "$(calculate_hash)" != "$CURRENT_HASH" ]; then
-      CURRENT_HASH=$(calculate_hash)
-      run_tests
-    fi
-
-    if [ "$(calculate_hash)" == "$CURRENT_HASH" ]; then
-      sleep 1
-    fi
-	done
-else
-	# Set handling of CTRL-C to allow the user to stop the loop.
+if [ "$ONCE" -eq 1 ]; then
 	trap ctrl_c_once INT
 	run_tests
-  stop_containers
+    stop_containers
 	exit $LAST_RUN_FAILED
+elif [ "$FLAKY" -eq 1 ]; then
+	trap ctrl_c_once INT
+
+	while [ "$STOP_ISSUED" -eq 0 ]; do
+		run_tests
+		if [ "$LAST_RUN_FAILED" -ne 0 ]; then
+			stop_containers
+			exit
+		fi
+		echo "All tests passed. Running again in 3s. Hit CTRL-C now to stop loop."
+		sleep 3
+	done
+else
+	trap ctrl_c INT
+
+    CURRENT_HASH=$(calculate_hash)
+    run_tests
+
+	while true; do
+    	if [ "$(calculate_hash)" != "$CURRENT_HASH" ]; then
+      		CURRENT_HASH=$(calculate_hash)
+      		run_tests
+    	fi
+
+    	if [ "$(calculate_hash)" == "$CURRENT_HASH" ]; then
+      		sleep 1
+    	fi
+	done
 fi
 
 stop_containers

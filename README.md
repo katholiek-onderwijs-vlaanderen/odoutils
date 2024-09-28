@@ -102,9 +102,9 @@ It uses docker containers to isolate the entire process of running the tests fro
 | `-p`   | Do not output in color. Do not clear screen. |
 | `-r`   | Deletes the database and odoo containers, as well as the bridge networks between them.<br/> The containers and networks will be re-created when you run the tests next time.<br/> The exit code is 0, also when nothing was deleted. |
 | `-t`   | Allow you to override the --test-tags with a custom value. Useful for test isolation. See command line documentation of odoo for syntax. |
+| `-f`   | Detect flaky tests. Run test suite until a test fails, then stop. |
 | `-v`   | Displays the script version number. |
-
-
+| `-d`   | Output extra logging for debugging the script. |
 
 ### Exit codes:
 
