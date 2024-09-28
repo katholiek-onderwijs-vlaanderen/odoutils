@@ -10,6 +10,7 @@ SHOULD
 - [ ] Investigate on how to make logging of odoo model objects convenient for logging/debugging.
 - [ ] Add -s flag to run slow tests to odounit.sh. By default don't run slow tests.
 - [ ] Add -m for setting the http port for the smtp4dev mail server.
+- [ ] Add -f flag to run unit tests in loop until at least one failure, to detect flaky unit tests more easily.
 
 COULD
 - [ ] add option -r to make location of requirements.txt file explicit.
@@ -23,7 +24,9 @@ WILL NOT
 
 DONE:
 
-- [x] Add support for pruning unused images and volumes.
+- [x] Added support to odorun.sh to allow passing in environment variables.
+- [x] Added support to odorun.sh and odounit.sh to run on macOS by removing dependency on inotifywait (not available on macOS).
+- [x] Add support for pruning unused images and volumes. 
 - [x] Investigate icecream package for logging execution / data of code.
 - [x] Handle missing requirements.txt
 - [x] Encapsulate code to suspend odoo logging during debug in module that is installed.
