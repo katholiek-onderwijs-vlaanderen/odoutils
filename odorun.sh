@@ -489,7 +489,7 @@ trace "Command line = [$@]."
 shift $(($OPTIND - 1))
 
 if [ $# -eq 0 ]; then
-  echo "No module to test was specified."
+  echo "No module to run was specified."
   echo
   usage_message
   exit 2
