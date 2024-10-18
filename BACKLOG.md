@@ -3,7 +3,7 @@ TO DO:
 MUST
 
 - [ ] Add unit tests for odorun.sh. Cover all cases for reloading in odorun in unit tests. Does changing model .py work? 
-- [ ] Add smtp4dev to odorun.sh to catch all mails, yet hae a functional mail server - and allow for inspecting mails in dev mode.
+- [ ] Add smtp4dev to odorun.sh to catch all mails, yet have a functional mail server - and allow for inspecting mails in dev mode.
 
 SHOULD
 
