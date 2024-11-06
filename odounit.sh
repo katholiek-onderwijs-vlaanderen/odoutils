@@ -27,7 +27,7 @@ DOCKER_NETWORK=run-odoo-tests-network
 # Name of the docker image that is used to run the test suite.
 DOCKER_ODOO_IMAGE_NAME=odoo:15
 # Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
-DOCKER_PG_IMAGE_NAME=postgres:10
+DOCKER_PG_IMAGE_NAME=postgres:latest
 
 # Run in loop, or run once. 0: loop / 1: once
 ONCE=0

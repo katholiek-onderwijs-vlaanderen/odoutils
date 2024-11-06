@@ -33,7 +33,7 @@ DOCKER_ODOO_IMAGE_BASE=odoo
 # Name of the docker image that is used to run the test suite.
 DOCKER_ODOO_IMAGE_NAME=$DOCKER_ODOO_IMAGE_BASE:15
 # Name of the docker image that is used for the backing database of the odoo instance that runs the test suite.
-DOCKER_PG_IMAGE_NAME=postgres:10
+DOCKER_PG_IMAGE_NAME=postgres:latest
 
 # On what port on the host machine will the http port be mapped? Default: 8069.
 # Can be overridden using the -p flag.
